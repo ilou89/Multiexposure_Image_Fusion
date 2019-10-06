@@ -26,10 +26,12 @@ CONFIG += c++14
 
 SOURCES += \
         main.cpp \
-        main_window.cpp
+        main_window.cpp \
+    fabemd_decomposer.cpp
 
 HEADERS += \
-        main_window.h
+        main_window.h \
+    fabemd_decomposer.h
 
 FORMS += \
         mainwindow.ui

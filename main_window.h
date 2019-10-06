@@ -5,6 +5,9 @@
 #include <QGraphicsView>
 #include <QLabel>
 #include <QImage>
+#include <memory>
+#include "fabemd_decomposer.h"
+
 
 namespace Ui {
 class MainWindow;
@@ -21,10 +24,14 @@ public:
 private slots:
     void on_actionOpen_Images_triggered();
 
+    void on_pushButton_released();
+
 private:
     Ui::MainWindow *ui;
     QVector<QLabel*> in_im_widgets;
     QVector<QImage*> inputImages;
+    std::unique_ptr<fabemd_decomposer> fabemdDecomposer;
+
 };
 
 #endif // MAIN_WINDOW_H

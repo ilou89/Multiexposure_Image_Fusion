@@ -9,6 +9,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    fabemdDecomposer =  std::make_unique<fabemd_decomposer>();
+    fabemdDecomposer->setInputImages(&inputImages);
 }
 
 MainWindow::~MainWindow()
@@ -21,7 +24,9 @@ void MainWindow::on_actionOpen_Images_triggered()
     QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Open Images"), QDir::currentPath(), tr("Image Files (*.png *.jpg *.bmp)"));
     if( !filenames.isEmpty() )
     {
-        //TODO: formalize clear existing widgets, images
+        //TODO: not sure if memory free should be performed as it is...
+        //Clear previous input
+        //********************
         for(int i = 0; i < in_im_widgets.length(); ++i){
             delete in_im_widgets.at(i);
         }
@@ -31,21 +36,30 @@ void MainWindow::on_actionOpen_Images_triggered()
         }
         in_im_widgets.clear();
         inputImages.clear();
+        //********************
 
-        //Create ui widgets, add input images to list
+
+        //Create ui widgets, load images
+        //********************
         for (int i =0;i<filenames.count();i++){
             QLabel* imageLabel = new QLabel(this);
             imageLabel->setScaledContents(true);
             in_im_widgets.push_back(imageLabel);
 
             ui->verticalLayout_3->insertWidget(0, imageLabel);//   addWidget(imageLabel);
-            QImage image(filenames.at(i));
-            inputImages.push_back(&image);
+            QImage* image = new QImage(filenames.at(i));
+            inputImages.push_back(image);
 
-            float image_ratio = static_cast<float>(image.width())/static_cast<float>(image.height());
-            qDebug()<<image.width() << image.height()<<image_ratio;
-            imageLabel->setPixmap(QPixmap::fromImage(image));
+            float image_ratio = static_cast<float>(image->width())/static_cast<float>(image->height());
+            qDebug()<<image->width() << image->height()<<image_ratio;
+            imageLabel->setPixmap(QPixmap::fromImage(*image));
             imageLabel->setFixedSize(320, 240);
         }
+        //********************
     }
+}
+
+void MainWindow::on_pushButton_released()
+{
+    fabemdDecomposer->getIMFs();
 }
