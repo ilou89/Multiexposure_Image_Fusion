@@ -28,10 +28,12 @@ SOURCES += \
         main.cpp \
         main_window.cpp \
     fabemd_decomposer.cpp
+    #matrix.cpp
 
 HEADERS += \
         main_window.h \
-    fabemd_decomposer.h
+    fabemd_decomposer.h \
+    matrix.h
 
 FORMS += \
         mainwindow.ui

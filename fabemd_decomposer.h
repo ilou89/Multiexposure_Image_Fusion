@@ -2,22 +2,28 @@
 #define FABEMD_DECOMPOSER_H
 
 #include <QImage>
+#include "matrix.h"
 
 class fabemd_decomposer
 {
 private:
     QVector<QImage*> *inputImages;
-    //2D arrays of size (width x height)
-    QVector<float***> y_channels;
-    QVector<float***> cb_channels;
-    QVector<float***> cr_channels;
+
+    QVector<matrix<float> *> y_channels;
+    QVector<matrix<float> *> cb_channels;
+    QVector<matrix<float> *> cr_channels;
+
     void rgb_to_ycbcr();
+    void decompose_y();
+    int ROWS, COLUMNS;
 
 public:
     fabemd_decomposer();
 
     void getIMFs();
     void setInputImages(QVector<QImage *> *images);
+    void set_resx(int value);
+    void set_resy(int value);
 };
 
 #endif // FABEMD_DECOMPOSER_H

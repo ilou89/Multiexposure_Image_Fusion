@@ -12,6 +12,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     fabemdDecomposer =  std::make_unique<fabemd_decomposer>();
     fabemdDecomposer->setInputImages(&inputImages);
+
+    scene = new QGraphicsScene(this);
+    ui->graphicsView->setScene(scene);
 }
 
 MainWindow::~MainWindow()
@@ -61,5 +64,13 @@ void MainWindow::on_actionOpen_Images_triggered()
 
 void MainWindow::on_pushButton_released()
 {
+    fabemdDecomposer->set_resx(inputImages.at(0)->width());
+    fabemdDecomposer->set_resy(inputImages.at(0)->height());
     fabemdDecomposer->getIMFs();
+
+    QPixmap pix;
+    pix = QPixmap::fromImage(*inputImages[0]) ;
+    if(pix.isNull()==0){
+        scene->addPixmap(pix);
+    }
 }

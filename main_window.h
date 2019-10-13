@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QGraphicsView>
+#include <QGraphicsScene>
 #include <QLabel>
 #include <QImage>
 #include <memory>
@@ -31,6 +32,8 @@ private:
     QVector<QLabel*> in_im_widgets;
     QVector<QImage*> inputImages;
     std::unique_ptr<fabemd_decomposer> fabemdDecomposer;
+    QGraphicsScene *scene;
+    QGraphicsPixmapItem* output_picture;
 
 };
 
