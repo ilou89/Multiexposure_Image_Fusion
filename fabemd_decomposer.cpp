@@ -32,6 +32,13 @@ void fabemd_decomposer::set_resy(int value)
     COLUMNS = value;
 }
 
+QImage *test_image;
+
+QImage *fabemd_decomposer::getTestImage()
+{
+    return test_image;
+}
+
 void fabemd_decomposer::rgb_to_ycbcr()
 {
     //parse input images, convert them to YCbCr and save each channel to the respective vector
@@ -68,42 +75,58 @@ void fabemd_decomposer::decompose_y()
 {
     for(int k = 0; k < y_channels.length(); ++k){
         matrix<float> *local_maxima  = new matrix<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+        matrix<float> *local_minima  = new matrix<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+        matrix<float> *cur_y = y_channels[k];
+        QVector<float> maxima_distances;
+        //TODO function detect_local_maxima()
+        for(int i = 1; i < ROWS - 1; ++i){
+            for(int j = 1; j < COLUMNS - 1; ++j){
+                if((cur_y->valueAt(i, j) > cur_y->valueAt(i - 1, j - 1)) &&
+                   (cur_y->valueAt(i, j) > cur_y->valueAt(i - 1, j))     &&
+                   (cur_y->valueAt(i, j) > cur_y->valueAt(i - 1, j + 1)) &&
+                   (cur_y->valueAt(i, j) > cur_y->valueAt(i, j - 1))     &&
+                   (cur_y->valueAt(i, j) > cur_y->valueAt(i, j + 1))     &&
+                   (cur_y->valueAt(i, j) > cur_y->valueAt(i + 1, j - 1)) &&
+                   (cur_y->valueAt(i, j) > cur_y->valueAt(i + 1, j))     &&
+                   (cur_y->valueAt(i, j) > cur_y->valueAt(i + 1, j +1))){
+                        local_maxima->set_cell_value( static_cast<uint>(i), static_cast<uint>(j),  cur_y->valueAt(i, j));
+                        maxima_distances.push_back(0.f);
+                 }
 
-//         //current y chanel
-         matrix<float> *cur_y = y_channels[k];
-
-//         qDebug()<<cur_y->valueAt(10, 5);
-//         cur_y->fill(14.23f);
-//         qDebug()<<cur_y->valueAt(10, 5);
-         for(int i = 1; i < ROWS - 1; ++i){
-             for(int j = 1; j < COLUMNS - 1; ++j){
-//                 //compare pixel to its 3x3 neighbours
-////                 qDebug()<< i << j;
-////                 qDebug()<<"before comparison"<< y_channel[i][j];
-
-//                 if((cur_y[i][j] > cur_y[i-1][j-1]) &&
-//                    (cur_y[i][j] > cur_y[i-1][j])   &&
-//                    (cur_y[i][j] > cur_y[i-1][j+1]) &&
-//                    (cur_y[i][j] > cur_y[i][j-1])   &&
-//                    (cur_y[i][j] > cur_y[i][j+1])   &&
-//                    (cur_y[i][j] > cur_y[i+1][j-1]) &&
-//                    (cur_y[i][j] > cur_y[i+1][j])   &&
-//                    (cur_y[i][j] > cur_y[i-1][j+1])
-//                         ){
-
-//                        qDebug()<< i << j << "value to be set" << y_channel[i][j];
-//                        local_maxima[i][j] =  5.f; //*y_channels[k][i][j];
-
-////                         if(k == 0){
-////                             qDebug()<< i << j << local_maxima[i][j];
-////                         }else{
-////                             qDebug()<<"akyro man mou";
-////                         }
-//                 }else{
-////                     local_maxima[i][j] = 0.f;
-//                 }
+                //TODO if bla bla local_minima->set_cell_value
              }
-         }
+        }
+
+        test_image = local_maxima->matrix_to_image();
+//        calculate_extrema_distances(local_maxima, &maxima_distances);
+//        qDebug()<<"maxima found" << maxima_distances.length();
+    }
+}
+
+void fabemd_decomposer::calculate_extrema_distances(matrix<float> *extrema, QVector<float> *extrema_distances)
+{
+
+    qDebug()<<"extrema count" << extrema_distances->length();
+
+    for(int i = 1; i < ROWS - 1; ++i){
+        for(int j = 1; j < COLUMNS - 1; ++j){
+
+            if(extrema->valueAt(i, j) > 0){
+                int win_half_size   = 1;
+                float distance      = 0.f;
+
+                while(distance == 0.f){
+                    for(int k = -win_half_size; k < win_half_size; ++k){
+                        for(int l = -win_half_size; l < win_half_size; ++l){
+                            if(((i+l) >0) && ((j+k)>0) && ((i+l)<= ROWS) && ((j+l)<=COLUMNS)){
+                                //TODO: calculate distances
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
     }
 }
 

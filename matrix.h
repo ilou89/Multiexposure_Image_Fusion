@@ -1,8 +1,9 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 #include <QVector>
+#include <QImage>
 #include <QtGlobal>
-
+#include <qdebug.h>
 template <typename T> class matrix
 {
 public:
@@ -12,12 +13,12 @@ public:
 //    matrix(const matrix<T>& rhs);
     //Destructor
     virtual ~matrix();
-
     uint get_rows();
     uint get_columns();
     T    valueAt(int i, int j);
     void set_cell_value(uint i, uint j, T value);
     void fill(T value);
+    QImage* matrix_to_image();
 private:
     uint rows, columns;
     QVector<QVector<T> > mat;

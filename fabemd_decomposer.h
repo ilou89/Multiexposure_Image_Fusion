@@ -15,6 +15,7 @@ private:
 
     void rgb_to_ycbcr();
     void decompose_y();
+    void calculate_extrema_distances(matrix<float> *extrema, QVector<float> *extrema_distance);
     int ROWS, COLUMNS;
 
 public:
@@ -24,6 +25,8 @@ public:
     void setInputImages(QVector<QImage *> *images);
     void set_resx(int value);
     void set_resy(int value);
+
+    QImage *getTestImage();
 };
 
 #endif // FABEMD_DECOMPOSER_H

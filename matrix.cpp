@@ -78,3 +78,18 @@ void matrix<T>::fill(T value)
       std::fill(mat[i].begin(), mat[i].end(), value);
     }
 }
+
+template<typename T>
+QImage* matrix<T>::matrix_to_image()
+{
+    QImage *image = new QImage(this->rows, this->columns, QImage::Format_RGB32);
+
+    for(int i = 0; i < image->width(); ++i){
+        for(int j = 0; j < image->height(); ++j){
+            QRgb color = qRgb(static_cast<int>(this->valueAt(i, j)), static_cast<int>(this->valueAt(i, j)), static_cast<int>(this->valueAt(i, j)));
+            image->setPixel(i, j, color);
+        }
+    }
+
+    return image;
+}

@@ -69,7 +69,8 @@ void MainWindow::on_pushButton_released()
     fabemdDecomposer->getIMFs();
 
     QPixmap pix;
-    pix = QPixmap::fromImage(*inputImages[0]) ;
+    pix = QPixmap::fromImage(*fabemdDecomposer->getTestImage());
+//    pix = QPixmap::fromImage(*inputImages[0]) ;
     if(pix.isNull()==0){
         scene->addPixmap(pix);
     }
