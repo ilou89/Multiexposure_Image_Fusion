@@ -9,8 +9,15 @@ template <typename T> class matrix
 public:
     //Constructor
     matrix(uint rows_, uint columns_);
-    //Assignment operator '='
-//    matrix(const matrix<T>& rhs);
+    //Copy constructor
+    matrix(const matrix &p2);
+    //TODO copy assignment
+    //operator overloads
+//    matrix operator=(const matrix&);
+    matrix operator-(const matrix&);
+    matrix operator*(const T value);
+//    matrix operator*(const matrix&);
+
     //Destructor
     virtual ~matrix();
     uint get_rows();
@@ -19,6 +26,10 @@ public:
     void set_cell_value(uint i, uint j, T value);
     void fill(T value);
     QImage* matrix_to_image();
+    void filterMax(int filter_size);
+    void filterMin(int filter_size);
+    void filterMean(int filter_size);
+
 private:
     uint rows, columns;
     QVector<QVector<T> > mat;

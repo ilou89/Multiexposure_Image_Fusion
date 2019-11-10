@@ -13,9 +13,15 @@ private:
     QVector<matrix<float> *> cb_channels;
     QVector<matrix<float> *> cr_channels;
 
+    QVector<matrix<float> *> imfs;
+//    QVector<matrix<float> *> maxima;
+//    QVector<matrix<float> *> minima;
+
+//    QVector<QVector<float>> maxima_distances;
+
     void rgb_to_ycbcr();
     void decompose_y();
-    void calculate_extrema_distances(matrix<float> *extrema, QVector<float> *extrema_distance);
+    int calculate_extrema_distances(matrix<float> *extrema, QVector<float> *extrema_distance);
     int ROWS, COLUMNS;
 
 public:

@@ -145,6 +145,9 @@ public:
     {
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "Image fusion", nullptr));
         actionOpen_Images->setText(QApplication::translate("MainWindow", "Open Images", nullptr));
+#ifndef QT_NO_SHORTCUT
+        actionOpen_Images->setShortcut(QApplication::translate("MainWindow", "Ctrl+O", nullptr));
+#endif // QT_NO_SHORTCUT
         pushButton->setText(QApplication::translate("MainWindow", "Fuse Images", nullptr));
         menuFile->setTitle(QApplication::translate("MainWindow", "File", nullptr));
     } // retranslateUi

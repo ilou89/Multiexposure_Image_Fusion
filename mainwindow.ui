@@ -120,6 +120,9 @@
    <property name="text">
     <string>Open Images</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
