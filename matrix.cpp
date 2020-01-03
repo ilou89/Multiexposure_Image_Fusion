@@ -33,6 +33,25 @@ matrix<T>::matrix(const matrix &p2)
 }
 
 template<typename T>
+matrix<T> matrix<T>::operator+(const matrix &m)
+{
+    //  if matrices do not have the same size, return original matrix
+    if (rows != m.rows || columns != m.columns){
+        qDebug()<<"pou pas re karamitro";
+//            cerr << "Matrix sizes do not match.";
+            return (*this);
+    }
+    matrix<T> new_mat(rows, columns);
+    for (int i = 0; i < rows; ++i){
+        for (int j = 0; j < columns; ++j){
+//            qDebug()<<i<<j<<this->mat[i][j] << m.mat[i][j];
+            new_mat.mat[i][j] = this->mat[i][j] + m.mat[i][j];
+        }
+    }
+    return new_mat;
+}
+
+template<typename T>
 matrix<T> matrix<T>::operator-(const matrix &m)
 {
     //  if matrices do not have the same size, return original matrix
@@ -54,7 +73,7 @@ matrix<T> matrix<T>::operator-(const matrix &m)
 template<typename T>
 matrix<T> matrix<T>::operator*(const T value)
 {
-    qDebug()<<"mulitplying scalar with matrix";
+//    qDebug()<<"mulitplying scalar with matrix";
     for (int i = 0; i < rows; ++i){
         for (int j = 0; j < columns; ++j){
             this->mat[i][j] = value*this->mat[i][j];
@@ -241,7 +260,7 @@ template<typename T>
 void matrix<T>::filterMin(int filter_size)
 {
     int half_size = filter_size/2;
-    qDebug()<<"half size"<<half_size;
+//    qDebug()<<"half size"<<half_size;
     matrix<float> temp_matrix(rows, columns);
 
     for(int i = 0; i < rows; ++i){
@@ -374,4 +393,47 @@ void matrix<T>::filterMean(int filter_size)
             mat[i][j] = temp_matrix.mat[i][j];
         }
     }
+}
+
+template<typename T>
+void matrix<T>::ScaleToInterval(T start, T end)
+{
+    const T min = GetMinValue();
+    const T max = GetMaxValue();
+
+    for ( int i = 0; i < rows; ++i ) {
+        for ( int j = 0; j < columns; ++j ) {
+            mat[i][j] = start + (end - start) * ( mat[i][j] - min ) / ( max - min );
+        }
+    }
+}
+
+template<typename T>
+T matrix<T>::GetMinValue()
+{
+    T min = mat[0][0];
+    for ( int i = 0; i < rows; ++i ) {
+        for ( int j = 0; j < columns; ++j ) {
+            if (mat[i][j] < min) {
+                min = mat[i][j];
+            }
+        }
+    }
+
+    return min;
+}
+
+template<typename T>
+T matrix<T>::GetMaxValue()
+{
+    T max = mat[0][0];
+    for ( int i = 0; i < rows; ++i ) {
+        for ( int j = 0; j < columns; ++j ) {
+            if (mat[i][j] > max) {
+                max = mat[i][j];
+            }
+        }
+    }
+
+    return max;
 }

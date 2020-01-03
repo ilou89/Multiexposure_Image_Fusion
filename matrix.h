@@ -14,6 +14,7 @@ public:
     //TODO copy assignment
     //operator overloads
 //    matrix operator=(const matrix&);
+    matrix operator+(const matrix&);
     matrix operator-(const matrix&);
     matrix operator*(const T value);
 //    matrix operator*(const matrix&);
@@ -29,6 +30,10 @@ public:
     void filterMax(int filter_size);
     void filterMin(int filter_size);
     void filterMean(int filter_size);
+    void ScaleToInterval(T start, T end);
+
+    T GetMinValue();
+    T GetMaxValue();
 
 private:
     uint rows, columns;

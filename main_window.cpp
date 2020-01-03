@@ -64,12 +64,12 @@ void MainWindow::on_actionOpen_Images_triggered()
 
 void MainWindow::on_pushButton_released()
 {
-    fabemdDecomposer->set_resx(inputImages.at(0)->width());
-    fabemdDecomposer->set_resy(inputImages.at(0)->height());
+    fabemdDecomposer->SetResX(inputImages.at(0)->width());
+    fabemdDecomposer->SetResY(inputImages.at(0)->height());
     fabemdDecomposer->getIMFs();
 
     QPixmap pix;
-    pix = QPixmap::fromImage(*fabemdDecomposer->getTestImage());
+    pix = QPixmap::fromImage(*fabemdDecomposer->GetTestImage());
 //    pix = QPixmap::fromImage(*inputImages[0]) ;
     if(pix.isNull()==0){
         scene->addPixmap(pix);
