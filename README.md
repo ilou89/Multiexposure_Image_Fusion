@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.com/ilou89/Triangle-Software-Rasterizer.svg?branch=master)](https://travis-ci.com/ilou89/Triangle-Software-Rasterizer)
-
 # Exposure Fusion by Fast and Adaptive Bidimensional Empirical Mode Decomposition (FABEMD)
 
-This repository, is the implementation of the algorithm proposed in [TODO](pdf link), using Qt and C++.
+This repository, aims to implementat the algorithm proposed in [Exposure Fusion by Fast and Adaptive Bidimensional Empirical Mode Decomposition (FABEMD)](https://github.com/ilou89/Multiexposure_Image_Fusion/blob/master/Exposure_fusion_by_FABEMD.pdf), using Qt and C++.
