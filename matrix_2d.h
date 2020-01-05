@@ -4,23 +4,18 @@
 #include <QImage>
 #include <QtGlobal>
 #include <qdebug.h>
-template <typename T> class matrix
+template <typename T> class Matrix2D
 {
 public:
-    //Constructor
-    matrix(uint rows_, uint columns_);
-    //Copy constructor
-    matrix(const matrix &p2);
-    //TODO copy assignment
-    //operator overloads
-//    matrix operator=(const matrix&);
-    matrix operator+(const matrix&);
-    matrix operator-(const matrix&);
-    matrix operator*(const T value);
-//    matrix operator*(const matrix&);
+    Matrix2D(uint rows_, uint columns_);
+    Matrix2D(const Matrix2D &p2);
 
-    //Destructor
-    virtual ~matrix();
+    //TODO make them friends in order to avoid operand strict order
+    Matrix2D operator+(const Matrix2D&);
+    Matrix2D operator-(const Matrix2D&);
+    Matrix2D operator*(const T value);
+
+    virtual ~Matrix2D();
     uint get_rows();
     uint get_columns();
     T    valueAt(int i, int j);
@@ -34,13 +29,14 @@ public:
 
     T GetMinValue();
     T GetMaxValue();
+    void SaveToFile(QString filename);
 
 private:
     uint rows, columns;
     QVector<QVector<T> > mat;
 };
 
-//Include source file due to the template feature
-#include "matrix.cpp"
+//Include source file due to the template restrictions
+#include "matrix_2d.cpp"
 
 #endif // MATRIX_H

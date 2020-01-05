@@ -11,10 +11,19 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     fabemdDecomposer =  std::make_unique<fabemd_decomposer>();
-    fabemdDecomposer->setInputImages(&inputImages);
+    fabemdDecomposer->SetInputImages(&inputImages);
 
     scene = new QGraphicsScene(this);
     ui->graphicsView->setScene(scene);
+}
+
+void MainWindow::SetFusedImage(QImage *fused_image)
+{
+    QPixmap pix;
+    pix = QPixmap::fromImage(*fused_image);
+    if(pix.isNull()==0){
+        scene->addPixmap(pix);
+    }
 }
 
 MainWindow::~MainWindow()
@@ -66,12 +75,6 @@ void MainWindow::on_pushButton_released()
 {
     fabemdDecomposer->SetResX(inputImages.at(0)->width());
     fabemdDecomposer->SetResY(inputImages.at(0)->height());
-    fabemdDecomposer->getIMFs();
-
-    QPixmap pix;
-    pix = QPixmap::fromImage(*fabemdDecomposer->GetTestImage());
-//    pix = QPixmap::fromImage(*inputImages[0]) ;
-    if(pix.isNull()==0){
-        scene->addPixmap(pix);
-    }
+    fabemdDecomposer->FuseImages();
+    SetFusedImage(fabemdDecomposer->GetFusedImage());
 }

@@ -33,7 +33,7 @@ SOURCES += \
 HEADERS += \
         main_window.h \
     fabemd_decomposer.h \
-    matrix.h
+    matrix_2d.h
 
 FORMS += \
         mainwindow.ui

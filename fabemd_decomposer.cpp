@@ -2,27 +2,24 @@
 #include <QDebug>
 #include <qmath.h>
 #include <algorithm>
+#include <QTime>
 
 fabemd_decomposer::fabemd_decomposer()
 {
 
 }
 
-void fabemd_decomposer::getIMFs()
+void fabemd_decomposer::FuseImages()
 {
-    //Step 1: Clear memory from previous execution
-    //TODO
-    //Step 2: convert to YCbCr
-    rgb_to_ycbcr();
-    //Step2: TODO
-    decompose_y();
+    //TODO free memory from previous execution
 
-    //Step 3 fuse imfs
-    fuse_imfs(3);
-
+    RGBToYCbCr();
+    DecomposeY();
+    FuseIMFs(3);
+    //TODO fuse Cb, Cr
 }
 
-void fabemd_decomposer::setInputImages(QVector<QImage *> *images)
+void fabemd_decomposer::SetInputImages(QVector<QImage *> *images)
 {
     inputImages = images;
 }
@@ -37,23 +34,21 @@ void fabemd_decomposer::SetResY(int value)
     COLUMNS = value;
 }
 
-QImage *test_image;
-
-QImage *fabemd_decomposer::GetTestImage()
+QImage *fabemd_decomposer::GetFusedImage()
 {
-    return test_image;
+    return fused_image;
 }
 
-void fabemd_decomposer::rgb_to_ycbcr()
+void fabemd_decomposer::RGBToYCbCr()
 {
     //parse input images, convert them to YCbCr and save each channel to the respective vector
     for(int k = 0; k < inputImages->length(); ++k){
         const int rows = static_cast<int>(inputImages->at(k)->width());
         const int cols = static_cast<int>(inputImages->at(k)->height());
 
-        matrix<float> *y_channel  = new matrix<float>(static_cast<uint>(rows), static_cast<uint>(cols));
-        matrix<float> *cb_channel = new matrix<float>(static_cast<uint>(rows), static_cast<uint>(cols));
-        matrix<float> *cr_channel = new matrix<float>(static_cast<uint>(rows), static_cast<uint>(cols));
+        Matrix2D<float> *y_channel  = new Matrix2D<float>(static_cast<uint>(rows), static_cast<uint>(cols));
+        Matrix2D<float> *cb_channel = new Matrix2D<float>(static_cast<uint>(rows), static_cast<uint>(cols));
+        Matrix2D<float> *cr_channel = new Matrix2D<float>(static_cast<uint>(rows), static_cast<uint>(cols));
 
         //convert to ycbcr format
         for(int i = 0; i < rows; ++i){
@@ -76,7 +71,7 @@ void fabemd_decomposer::rgb_to_ycbcr()
     }
 }
 
-void fabemd_decomposer::decompose_y()
+void fabemd_decomposer::DecomposeY()
 {
     //window minimum size
     int upper_env_win_size = 2;
@@ -85,24 +80,28 @@ void fabemd_decomposer::decompose_y()
 
     QVector<float> maxima_distances;
     QVector<float> minima_distances;
-    matrix<float> local_maxima(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
-    matrix<float> local_minima(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+    Matrix2D<float> local_maxima(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+    Matrix2D<float> local_minima(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
 
     //Init extrema count for the first iteration
     int extrema_count = 5000;
     imfs.resize(y_channels.length());
+    int extrema_threshold = 10;
 
-    while ( extrema_count > 200 ) {
+    while ( extrema_count > extrema_threshold ) {
 
         int win_size_prev = win_size;
+        QTime timer1;
+        timer1.start();
         //Step 1
         for ( int k = 0; k < y_channels.length(); ++k ) {
+
             maxima_distances.clear();
             minima_distances.clear();
 
             local_maxima.fill(-1.f);
             local_minima.fill(-1.f);
-            matrix<float> *cur_y = y_channels[k];
+            Matrix2D<float> *cur_y = y_channels[k];
 
             //TODO create function detect_local_maxima()
             for ( int i = 1; i < ROWS - 1; ++i ) {
@@ -138,7 +137,7 @@ void fabemd_decomposer::decompose_y()
 
             extrema_count = std::min(maxima_distances.length(), minima_distances.length());
 
-            int cur_win_size = calculate_extrema_distances(&local_maxima, &maxima_distances);
+            int cur_win_size = GetExtremaDistance(&local_maxima, &maxima_distances);
 
             if(cur_win_size > upper_env_win_size){
                 upper_env_win_size = cur_win_size;
@@ -150,7 +149,7 @@ void fabemd_decomposer::decompose_y()
                 upper_env_win_size++;
             }
 
-            cur_win_size = calculate_extrema_distances(&local_minima, &minima_distances);
+            cur_win_size = GetExtremaDistance(&local_minima, &minima_distances);
 
             if(cur_win_size > lower_env_win_size){
                 lower_env_win_size = cur_win_size;
@@ -166,60 +165,32 @@ void fabemd_decomposer::decompose_y()
         }//for k < image_count
 
         win_size = std::max(upper_env_win_size, lower_env_win_size);
-        qDebug()<<"Window size = " << win_size;
+
         for ( int k = 0; k < y_channels.count(); ++k ) {
-
             QString filename;
-            matrix<float> *upper_envelope = new matrix<float>(*y_channels[k]);
+            Matrix2D<float> *upper_envelope = new Matrix2D<float>(*y_channels[k]);
             upper_envelope->filterMax(win_size);
-//            test_image = upper_envelope->matrix_to_image();
-//            filename = "Images/results/upper_env" + QString::number(imfs[k].length()) + QString::number(k) + ".png";
-//            test_image->save(filename);
-
             upper_envelope->filterMean(win_size);
-//            test_image = upper_envelope->matrix_to_image();
-//            filename = "Images/results/upper_env_smooth" + QString::number(imfs[k].length()) + QString::number(k) + ".png";
-//            test_image->save(filename);
 
-
-            matrix<float> *lower_envelope = new matrix<float>(*y_channels[k]);
+            Matrix2D<float> *lower_envelope = new Matrix2D<float>(*y_channels[k]);
             lower_envelope->filterMin(win_size);
-//            test_image = upper_envelope->matrix_to_image();
-//            filename = "Images/results/lower_env" + QString::number(imfs[k].length()) + QString::number(k) + ".png";
-//            test_image->save(filename);
 
-            lower_envelope->filterMean(win_size);
-//            test_image = upper_envelope->matrix_to_image();
-//            filename = "Images/results/lower_env_smooth" + QString::number(imfs[k].length()) + QString::number(k) + ".png";
-//            test_image->save(filename);
-
-            matrix<float> *imf = new matrix<float>(*y_channels[k]);
+            Matrix2D<float> *imf = new Matrix2D<float>(*y_channels[k]);
             *imf = *y_channels[k] - (*upper_envelope + *lower_envelope)*0.5;
             imfs[k].push_back(imf);
 
             //Update y-channel for the next iteration
             *y_channels[k] = *y_channels[k] - *imf;
-
-//            test_image = imf->matrix_to_image();
-//            filename = "Images/results/imf_" + QString::number(imfs[k].length()) + QString::number(k) + ".png";
-//            test_image->save(filename);
         }
-
-//        qDebug()<<"extrema count = " << extrema_count;
     }//while(extrema_count > thresshold)
 
-    //Add the residue to the imfs in order to process the ims vector afterwards
-
+    //Add the residue to the imfs in order to process the imfs vector afterwards
     for ( int i = 0; i <  y_channels.count(); ++i ) {
         imfs[i].push_back(y_channels[i]);
     }
-//    for(int i = 0; i < imfs[0].length(); ++i ) {
-//        *y_channels[0] = *y_channels[0] + *imfs[0].at(i);
-//    }
-//    test_image = y_channels[0]->matrix_to_image();
 }
 
-int fabemd_decomposer::calculate_extrema_distances(matrix<float> *extrema, QVector<float> *extrema_distances)
+int fabemd_decomposer::GetExtremaDistance(Matrix2D<float> *extrema, QVector<float> *extrema_distances)
 {
     float const max_distance = extrema_distances->at(0);
     int counter = -1;
@@ -293,11 +264,10 @@ int fabemd_decomposer::calculate_extrema_distances(matrix<float> *extrema, QVect
         }
     }
     int min_val = static_cast<int>(*std::min_element(extrema_distances->constBegin(), extrema_distances->constEnd()));
-    qDebug()<<"calculated filter size"<<min_val;
     return min_val;
 }
 
-void fabemd_decomposer::fuse_imfs(int win_size)
+void fabemd_decomposer::FuseIMFs(int win_size)
 {
     int half_win = static_cast<int>(0.5*win_size);
 
@@ -307,10 +277,10 @@ void fabemd_decomposer::fuse_imfs(int win_size)
 
     QVector<float> weights;
 
-    matrix<float> *fused_y_channel = new matrix<float>(ROWS, COLUMNS);
+    Matrix2D<float> *fused_y_channel = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
 
     for ( int i = 0; i < imfs_depth; ++i ) {
-        matrix<float> *fused_imf = new matrix<float>(ROWS, COLUMNS);
+        Matrix2D<float> *fused_imf = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
 
         qDebug()<<"creating imf"<< i;
 
@@ -320,9 +290,7 @@ void fabemd_decomposer::fuse_imfs(int win_size)
                 float nom   = 0.f;
 
                 for ( int j = 0; j < images_count; ++j ) {
-                    nom          = 0.f;
                     float local_energy = 0.f;
-
                     for (int k = -half_win; k < half_win; ++k ) {
                          if ( (y + k < 0) || ( y + k >= COLUMNS) ) {
                              continue;
@@ -334,32 +302,26 @@ void fabemd_decomposer::fuse_imfs(int win_size)
                             }
                         }
                     }
-
-                    if(x==0 && y == 0){
-                        test_image = imfs.at(j).at(i)->matrix_to_image();
-                        QString filename = "Images/results/imf_" + QString::number(i) + "_" + QString::number(j) + ".png";
-                        test_image->save(filename);
-                    }
                     nom   += local_energy*imfs.at(j).at(i)->valueAt(x, y);
                     denom += local_energy;
 
                 }//images_count
-//                qDebug()<<"Pixel("<<x<<", "<<y<<")"<<imfs.at(0).at(i)->valueAt(x, y) <<"-"<<imfs.at(1).at(i)->valueAt(x, y) <<"-"<<imfs.at(2).at(i)->valueAt(x, y)<<nom<<denom;
-                fused_imf->set_cell_value(x, y, nom/denom);
+                fused_imf->set_cell_value(static_cast<uint>(x), static_cast<uint>(y), nom/denom);
 
             } //columns
         } //rows
 
-        test_image = fused_imf->matrix_to_image();
+        fused_image = fused_imf->matrix_to_image();
         QString filename = "Images/results/imf_fused_" + QString::number(i) + ".png";
-        test_image->save(filename);
+        fused_image->save(filename);
+        filename = "Images/results//imf_fused_" + QString::number(i) + ".txt";
+        fused_imf->SaveToFile(filename);
 
         *fused_y_channel = *fused_y_channel + *fused_imf;
 
     } //imfs_depth
 
     fused_y_channel->ScaleToInterval(16, 236);
-    test_image = fused_y_channel->matrix_to_image();
-    test_image->save("Images/results/output.png");
+    fused_image = fused_y_channel->matrix_to_image();
+    fused_image->save("Images/results/output.png");
 }
-

@@ -20,11 +20,11 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+    void SetFusedImage(QImage *fused_image);
     ~MainWindow();
 
 private slots:
     void on_actionOpen_Images_triggered();
-
     void on_pushButton_released();
 
 private:
@@ -34,7 +34,6 @@ private:
     std::unique_ptr<fabemd_decomposer> fabemdDecomposer;
     QGraphicsScene *scene;
     QGraphicsPixmapItem* output_picture;
-
 };
 
 #endif // MAIN_WINDOW_H
