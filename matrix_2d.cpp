@@ -1,5 +1,6 @@
 #include "matrix_2d.h"
 #include "QFile"
+#include <math.h>
 
 template<typename T>
 Matrix2D<T>::Matrix2D(uint rows_, uint columns_)
@@ -76,6 +77,36 @@ Matrix2D<T> Matrix2D<T>::operator*(const T value)
 
     return *this;
 }
+
+template<typename T>
+bool Matrix2D<T>::compare(const Matrix2D &m2)
+{
+    qDebug()<<"compare matrices";
+    for (int i = 0; i < rows; ++i){
+        for (int j = 0; j < columns; ++j){
+            if ( this->mat[i][j] - m2.mat[i][j] > 1.f) {
+                qDebug()<< this->mat[i][j] << " vs " << m2.mat[i][j];
+//                return false;
+            }
+        }
+    }
+    return true;
+}
+
+//template<typename T>
+//bool Matrix2D<T>::operator==(const Matrix2D&m)
+//{
+//    qDebug()<<"compare matrices";
+//    for (int i = 0; i < rows; ++i){
+//        for (int j = 0; j < columns; ++j){
+//            if ( this->mat[i][j] != m.mat[i][j] ) {
+//                qDebug()<< this->mat[i][j] << " vs " << m.mat[i][j];
+//                return false;
+//            }
+//        }
+//    }
+//    return true;
+//}
 
 template<typename T>
 Matrix2D<T>::~Matrix2D()
@@ -315,10 +346,12 @@ void Matrix2D<T>::filterMin(int filter_size)
 template<typename T>
 void Matrix2D<T>::filterMean(int filter_size)
 {
-    //Mean Filter is separable, thus the convolution will be performed in tow passes: row and column-wise
-    int half_size = filter_size/2;
+    //Mean Filter is separable, thus the convolution will be performed in two passes: row and column-wise
+    int half_size = static_cast<int>(floor(filter_size/2));
 
     Matrix2D<float> temp_matrix(rows, columns);
+
+#if 1
     //Row-wise convolution
     for(int i = 0; i < rows; ++i ) {
         for(int j = 0; j < columns; ++j){
@@ -327,9 +360,19 @@ void Matrix2D<T>::filterMean(int filter_size)
             for(int k = -half_size; k <= half_size; ++k){
                 int row = i + k;
 
+                //symmetric padding
+                if (row < 0 ) {
+                    row = -row;
+                }
+                if ( row >= rows) {
+                    row -= rows;
+                }
+
                 if ( row >= 0 && row < rows ) {
                     pixels_count++;
                     new_value += mat[row][j];
+                } else {
+                    qDebug()<<"EEEEEEErroooor";
                 }
             }
             temp_matrix.mat[i][j] = new_value/pixels_count;
@@ -345,17 +388,28 @@ void Matrix2D<T>::filterMean(int filter_size)
             for(int k = -half_size; k <= half_size; ++k){
                 int column = j + k;
 
+                //symmetric padding
+                if (column < 0 ) {
+                    column = -column;
+                }
+                if ( column >= columns) {
+                    column -= column;
+                }
+
                 if ( column >= 0 && column < columns ) {
                     pixels_count++;
                     new_value += temp_matrix.mat[i][column];
+                } else {
+                    qDebug()<<"EEEEEEErroooor";
                 }
             }
             temp_matrix2.mat[i][j] = new_value/pixels_count;
         }
     }
 
+#else
 
-/*//Naive convolution
+//Naive convolution
     for(int i = 0; i < rows; ++i){
         for(int j = 0; j < columns; ++j){
 
@@ -369,35 +423,40 @@ void Matrix2D<T>::filterMean(int filter_size)
                         int column = j + l;
 
                         if(row < 0){
-                            continue;
-//                            row = -row;
+                            row = -row;
                         }
 
                         if(column < 0){
-                            continue;
-//                            column = -column;
+                            column = -column;
                         }
 
                         if(row >= rows){
-                            continue;
-//                            row -= rows;
+                            row -= rows;
                         }
 
                         if(column >= columns){
-                            continue;
-//                            column -= columns;
+                            column -= columns;
                         }
-                        pixels_count++;
-                        new_value += mat[row][column];
+
+                        if ( (row >= 0 && row < rows) && (column >= 0 && column < columns) ){
+                            pixels_count++;
+                            new_value += mat[row][column];
+                        }else{
+                            qDebug()<<"out of scope"<<row<<column;
+                        }
                     }
                 }
+                if(pixels_count != filter_size*filter_size){
+                    qDebug()<<"wrong elements in convolution";
+                }
+//                qDebug()<<"pixels count"<<pixels_count<<"filter size"<<filter_size;
                 temp_matrix.mat[i][j] = new_value/pixels_count;
         }
     }
-*/
+#endif
     for(int i = 0; i < rows; ++i){
         for(int j = 0; j < columns; ++j){
-            mat[i][j] = temp_matrix2.mat[i][j];
+            mat[i][j] = temp_matrix.mat[i][j];
         }
     }
 }

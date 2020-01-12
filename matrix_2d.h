@@ -14,6 +14,7 @@ public:
     Matrix2D operator+(const Matrix2D&);
     Matrix2D operator-(const Matrix2D&);
     Matrix2D operator*(const T value);
+    bool compare(const Matrix2D&m2);
 
     virtual ~Matrix2D();
     uint get_rows();

@@ -3,6 +3,7 @@
 #include <qmath.h>
 #include <algorithm>
 #include <QTime>
+#include "matrix_2d.h"
 
 fabemd_decomposer::fabemd_decomposer()
 {
@@ -86,10 +87,11 @@ void fabemd_decomposer::DecomposeY()
     //Init extrema count for the first iteration
     int extrema_count = 5000;
     imfs.resize(y_channels.length());
-    int extrema_threshold = 10;
+    const int extrema_threshold = 10;
 
-    while ( extrema_count > extrema_threshold ) {
+    while ( (extrema_count > extrema_threshold) && (imfs.at(imfs.length() -1).length() < 3) ) {
 
+        qDebug()<<"imfs"<<imfs.at(imfs.length() -1).length();
         int win_size_prev = win_size;
         QTime timer1;
         timer1.start();
@@ -165,6 +167,7 @@ void fabemd_decomposer::DecomposeY()
         }//for k < image_count
 
         win_size = std::max(upper_env_win_size, lower_env_win_size);
+        qDebug()<<extrema_count << win_size;
 
         for ( int k = 0; k < y_channels.count(); ++k ) {
             QString filename;
@@ -178,6 +181,12 @@ void fabemd_decomposer::DecomposeY()
             Matrix2D<float> *imf = new Matrix2D<float>(*y_channels[k]);
             *imf = *y_channels[k] - (*upper_envelope + *lower_envelope)*0.5;
             imfs[k].push_back(imf);
+
+
+            fused_image = imf->matrix_to_image();
+            filename = "Images/results/imf_" + QString::number(imfs.at(0).length()) + "_" + QString::number(k) + ".png";
+            qDebug()<<"saving imf"<<filename;
+            fused_image->save(filename);
 
             //Update y-channel for the next iteration
             *y_channels[k] = *y_channels[k] - *imf;
@@ -292,29 +301,43 @@ void fabemd_decomposer::FuseIMFs(int win_size)
                 for ( int j = 0; j < images_count; ++j ) {
                     float local_energy = 0.f;
                     for (int k = -half_win; k < half_win; ++k ) {
-                         if ( (y + k < 0) || ( y + k >= COLUMNS) ) {
-                             continue;
-                         }
-
                          for (int l = -half_win; l < half_win; ++l ) {
-                            if ( (x + l >= 0) && ( x + l < ROWS) ) {
-                                local_energy += imfs.at(j).at(i)->valueAt(x + l, y + k) * imfs.at(j).at(i)->valueAt(x + l, y + k);
+                            int row    = x + l;
+                            int column = y + k;
+
+                            if ( row < 0 ) {
+                                row = -row;
+                            } else if ( row >= ROWS ) {
+                                row -= ROWS;
                             }
+
+                            if ( column < 0 ) {
+                                column = -column;
+                            } else if ( column >= COLUMNS ) {
+                                column -= COLUMNS;
+                            }
+
+                            local_energy += imfs.at(j).at(i)->valueAt(row, column) * imfs.at(j).at(i)->valueAt(row, column);
                         }
                     }
                     nom   += local_energy*imfs.at(j).at(i)->valueAt(x, y);
                     denom += local_energy;
 
                 }//images_count
-                fused_imf->set_cell_value(static_cast<uint>(x), static_cast<uint>(y), nom/denom);
 
+                // Avoid divisions with very small values, set pixel to 0
+                if ( denom < 0.001f){
+                    nom   = 0.f;
+                    denom = 1.f;
+                }
+                fused_imf->set_cell_value(static_cast<uint>(x), static_cast<uint>(y), nom/denom);
             } //columns
         } //rows
 
         fused_image = fused_imf->matrix_to_image();
         QString filename = "Images/results/imf_fused_" + QString::number(i) + ".png";
         fused_image->save(filename);
-        filename = "Images/results//imf_fused_" + QString::number(i) + ".txt";
+        filename = "Images/results/imf_fused_" + QString::number(i) + ".txt";
         fused_imf->SaveToFile(filename);
 
         *fused_y_channel = *fused_y_channel + *fused_imf;
