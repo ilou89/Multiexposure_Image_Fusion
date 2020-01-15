@@ -2,7 +2,6 @@
 #include <QDebug>
 #include <qmath.h>
 #include <algorithm>
-#include <QTime>
 #include "matrix_2d.h"
 
 fabemd_decomposer::fabemd_decomposer()
@@ -88,13 +87,15 @@ void fabemd_decomposer::DecomposeY()
     int extrema_count = 5000;
     imfs.resize(y_channels.length());
     const int extrema_threshold = 10;
+    int imf_count = 0;
 
-    while ( (extrema_count > extrema_threshold) && (imfs.at(imfs.length() -1).length() < 3) ) {
+
+    //Consider 7 imfs enough for images decomposition
+    while ( (extrema_count > extrema_threshold) && (imf_count < 150) ) {
 
         qDebug()<<"imfs"<<imfs.at(imfs.length() -1).length();
         int win_size_prev = win_size;
-        QTime timer1;
-        timer1.start();
+
         //Step 1
         for ( int k = 0; k < y_channels.length(); ++k ) {
 
@@ -167,7 +168,7 @@ void fabemd_decomposer::DecomposeY()
         }//for k < image_count
 
         win_size = std::max(upper_env_win_size, lower_env_win_size);
-        qDebug()<<extrema_count << win_size;
+        qDebug()<<"Extrema"<<extrema_count;
 
         for ( int k = 0; k < y_channels.count(); ++k ) {
             QString filename;
@@ -177,11 +178,11 @@ void fabemd_decomposer::DecomposeY()
 
             Matrix2D<float> *lower_envelope = new Matrix2D<float>(*y_channels[k]);
             lower_envelope->filterMin(win_size);
+            lower_envelope->filterMean(win_size);
 
             Matrix2D<float> *imf = new Matrix2D<float>(*y_channels[k]);
             *imf = *y_channels[k] - (*upper_envelope + *lower_envelope)*0.5;
             imfs[k].push_back(imf);
-
 
             fused_image = imf->matrix_to_image();
             filename = "Images/results/imf_" + QString::number(imfs.at(0).length()) + "_" + QString::number(k) + ".png";
@@ -190,6 +191,10 @@ void fabemd_decomposer::DecomposeY()
 
             //Update y-channel for the next iteration
             *y_channels[k] = *y_channels[k] - *imf;
+
+            if ( k == y_channels.count() -1 ) {
+                imf_count++;
+            }
         }
     }//while(extrema_count > thresshold)
 
@@ -344,7 +349,7 @@ void fabemd_decomposer::FuseIMFs(int win_size)
 
     } //imfs_depth
 
-    fused_y_channel->ScaleToInterval(16, 236);
+//    fused_y_channel->ScaleToInterval(16, 236);
     fused_image = fused_y_channel->matrix_to_image();
     fused_image->save("Images/results/output.png");
 }

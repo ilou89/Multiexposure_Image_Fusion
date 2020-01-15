@@ -23,9 +23,9 @@ public:
     void set_cell_value(uint i, uint j, T value);
     void fill(T value);
     QImage* matrix_to_image();
-    void filterMax(int filter_size);
-    void filterMin(int filter_size);
-    void filterMean(int filter_size);
+    virtual void filterMax(int filter_size);
+    virtual void filterMin(int filter_size);
+    virtual void filterMean(int filter_size);
     void ScaleToInterval(T start, T end);
 
     T GetMinValue();

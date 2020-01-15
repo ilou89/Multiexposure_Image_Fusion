@@ -1,6 +1,8 @@
 #include "matrix_2d.h"
 #include "QFile"
 #include <math.h>
+#include <iostream>
+#include <chrono>
 
 template<typename T>
 Matrix2D<T>::Matrix2D(uint rows_, uint columns_)
@@ -172,42 +174,30 @@ QImage* Matrix2D<T>::matrix_to_image()
     return image;
 }
 
-//Naive implementation of max filter: TODO replace with Van Herk algorithm
 template<typename T>
-void Matrix2D<T>::filterMax(int filter_size)
+void Matrix2D<T>::filterMax(const int filter_size)
 {
     int half_size = filter_size/2;
     Matrix2D<float> temp_matrix(rows, columns);
 
-    for(int i = 0; i < rows; ++i){
-        for(int j = 0; j < columns; ++j){
+    auto start = std::chrono::steady_clock::now();
 
-            float max_value = 0.f;
+    for ( int i = 0; i < rows; ++i ) {
+        for ( int j = 0; j < columns; ++j ) {
+            float buffer[filter_size * filter_size];
+            int index = 0;
+            float max_value = -1.f;
             for(int k = -half_size; k <= half_size; ++k){
                 for(int l = -half_size; l <= half_size; ++l){
-
-                    //Mirror pixels at the border of the image
                     int row    = i + k;
                     int column = j + l;
 
-                    if(row < 0){
-                        continue;
-//                        row = -row;
+                    if(row < 0 || row >= rows){
+                        break;
                     }
 
-                    if(column < 0){
+                    if(column < 0 || column >= columns){
                         continue;
-//                        column = -column;
-                    }
-
-                    if(row >= rows){
-                        continue;
-//                        row = row - rows;
-                    }
-
-                    if(column >= columns){
-                        continue;
-//                        column = column - columns;
                     }
 
                     if(mat[row][column] > max_value){
@@ -216,38 +206,12 @@ void Matrix2D<T>::filterMax(int filter_size)
                 }
             }
 
-            for(int k = -half_size; k <= half_size; ++k){
-                for(int l = -half_size; l <= half_size; ++l){
-
-                    //Mirror pixels at the border of the image
-                    int row    = i + k;
-                    int column = j + l;
-
-                    if(row < 0){
-                        continue;
-//                        row = -row;
-                    }
-
-                    if(column < 0){
-                        continue;
-//                        column = -column;
-                    }
-
-                    if(row >= rows){
-                        continue;
-//                        row -= rows;
-                    }
-
-                    if(column >= columns){
-                        continue;
-//                        column -= columns;
-                    }
-
-                    temp_matrix.mat[row][column] = max_value;
-                }
-            }
+            temp_matrix.mat[i][j] = max_value;
         }
     }
+
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "MAX Filter: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< filter_size<<"   "<<std::endl<< std::flush;
 
     for(int i = 0; i < rows; ++i){
         for(int j = 0; j < columns; ++j){
@@ -263,6 +227,8 @@ void Matrix2D<T>::filterMin(int filter_size)
 //    qDebug()<<"half size"<<half_size;
     Matrix2D<float> temp_matrix(rows, columns);
 
+    auto start = std::chrono::steady_clock::now();
+
     for(int i = 0; i < rows; ++i){
         for(int j = 0; j < columns; ++j){
 
@@ -277,22 +243,18 @@ void Matrix2D<T>::filterMin(int filter_size)
                     int column = j + l;
 
                     if(row < 0){
-//                        row = -row;
                         continue;
                     }
 
                     if(column < 0){
-//                        column = -column;
                         continue;
                     }
 
                     if(row >= rows){
-//                        row = row - rows;
                         continue;
                     }
 
                     if(column >= columns){
-//                        column = column - columns;
                         continue;
                     }
 
@@ -301,40 +263,12 @@ void Matrix2D<T>::filterMin(int filter_size)
                     }
                 }
             }
-
-            //replace values inside window with the minimum value found earlier
-            for(int k = -half_size; k <= half_size; ++k){
-                for(int l = -half_size; l <= half_size; ++l){
-
-                    //Mirror pixels at the border of the image
-                    int row    = i + k;
-                    int column = j + l;
-
-                    if(row < 0){
-                        continue;
-//                        row = -row;
-                    }
-
-                    if(column < 0){
-                        continue;
-//                        column = -column;
-                    }
-
-                    if(row >= rows){
-                        continue;
-                        row -= rows;
-                    }
-
-                    if(column >= columns){
-                        continue;
-//                        column -= columns;
-                    }
-
-                    temp_matrix.mat[row][column] = min_value;
-                }
-            }
+            temp_matrix.mat[i][j] = min_value;
         }
     }
+
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "MIN Filter: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< filter_size<<"   "<<std::endl<< std::flush;
 
     for(int i = 0; i < rows; ++i){
         for(int j = 0; j < columns; ++j){
