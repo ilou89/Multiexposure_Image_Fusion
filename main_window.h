@@ -7,7 +7,7 @@
 #include <QLabel>
 #include <QImage>
 #include <memory>
-#include "fabemd_decomposer.h"
+#include "fabemd_fusion.h"
 
 
 namespace Ui {
@@ -31,7 +31,7 @@ private:
     Ui::MainWindow *ui;
     QVector<QLabel*> in_im_widgets;
     QVector<QImage*> inputImages;
-    std::unique_ptr<fabemd_decomposer> fabemdDecomposer;
+    std::unique_ptr<FabemdFusion> fabemdDecomposer;
     QGraphicsScene *scene;
     QGraphicsPixmapItem* output_picture;
 };

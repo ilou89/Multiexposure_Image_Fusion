@@ -1,17 +1,24 @@
-#include "fabemd_decomposer.h"
+#include "fabemd_fusion.h"
 #include <QDebug>
 #include <qmath.h>
 #include <algorithm>
+#include <chrono>
 #include "matrix_2d.h"
 
-fabemd_decomposer::fabemd_decomposer()
+FabemdFusion::FabemdFusion()
 {
 
 }
 
-void fabemd_decomposer::FuseImages()
+void FabemdFusion::FuseImages(int rows_, int columns_)
 {
-    //TODO free memory from previous execution
+    ROWS    = rows_;
+    COLUMNS = columns_;
+
+    y_channels.clear();
+    cb_channels.clear();
+    cr_channels.clear();
+    imfs.clear();
 
     RGBToYCbCr();
     DecomposeY();
@@ -19,48 +26,35 @@ void fabemd_decomposer::FuseImages()
     //TODO fuse Cb, Cr
 }
 
-void fabemd_decomposer::SetInputImages(QVector<QImage *> *images)
+void FabemdFusion::SetInputImages(QVector<QImage *> *images)
 {
     inputImages = images;
 }
 
-void fabemd_decomposer::SetResX(int value)
-{
-    ROWS = value;
-}
-
-void fabemd_decomposer::SetResY(int value)
-{
-    COLUMNS = value;
-}
-
-QImage *fabemd_decomposer::GetFusedImage()
+QImage *FabemdFusion::GetFusedImage()
 {
     return fused_image;
 }
 
-void fabemd_decomposer::RGBToYCbCr()
+void FabemdFusion::RGBToYCbCr()
 {
     //parse input images, convert them to YCbCr and save each channel to the respective vector
     for(int k = 0; k < inputImages->length(); ++k){
-        const int rows = static_cast<int>(inputImages->at(k)->width());
-        const int cols = static_cast<int>(inputImages->at(k)->height());
-
-        Matrix2D<float> *y_channel  = new Matrix2D<float>(static_cast<uint>(rows), static_cast<uint>(cols));
-        Matrix2D<float> *cb_channel = new Matrix2D<float>(static_cast<uint>(rows), static_cast<uint>(cols));
-        Matrix2D<float> *cr_channel = new Matrix2D<float>(static_cast<uint>(rows), static_cast<uint>(cols));
+        Matrix2D<float> *y_channel  = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+        Matrix2D<float> *cb_channel = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+        Matrix2D<float> *cr_channel = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
 
         //convert to ycbcr format
-        for(int i = 0; i < rows; ++i){
-            for(int j = 0; j < cols; ++j){
-                QColor rgb = inputImages->at(k)->pixel(i, j);
+        for(int i = 0; i < ROWS; ++i){
+            for(int j = 0; j < COLUMNS; ++j){
+                QColor rgb  = inputImages->at(k)->pixel(i, j);
                 float red   = static_cast<float>(rgb.red());
                 float green = static_cast<float>(rgb.green());
                 float blue  = static_cast<float>(rgb.blue());
 
-                y_channel-> set_cell_value(static_cast<uint>(i), static_cast<uint>(j), 16.f  +  65.738f*red/256.f + 129.057f*green/256.f +  25.064f*blue/256.f);
-                cb_channel->set_cell_value(static_cast<uint>(i), static_cast<uint>(j), 128.f -  37.945f*red/256.f -  74.494f*green/256.f + 112.439f*blue/256.f);
-                cr_channel->set_cell_value(static_cast<uint>(i), static_cast<uint>(j), 128.f + 112.439f*red/256.f -  94.154f*green/256.f -  18.285f*blue/256.f);
+                y_channel-> SetCellValue(static_cast<uint>(i), static_cast<uint>(j), 16.f  +  65.738f*red/256.f + 129.057f*green/256.f +  25.064f*blue/256.f);
+                cb_channel->SetCellValue(static_cast<uint>(i), static_cast<uint>(j), 128.f -  37.945f*red/256.f -  74.494f*green/256.f + 112.439f*blue/256.f);
+                cr_channel->SetCellValue(static_cast<uint>(i), static_cast<uint>(j), 128.f + 112.439f*red/256.f -  94.154f*green/256.f -  18.285f*blue/256.f);
             }
         }
 
@@ -71,7 +65,7 @@ void fabemd_decomposer::RGBToYCbCr()
     }
 }
 
-void fabemd_decomposer::DecomposeY()
+void FabemdFusion::DecomposeY()
 {
     //window minimum size
     int upper_env_win_size = 2;
@@ -87,13 +81,12 @@ void fabemd_decomposer::DecomposeY()
     int extrema_count = 5000;
     imfs.resize(y_channels.length());
     const int extrema_threshold = 10;
+
+    //Control the decomposition granularity. Trade-off between performance for image quality
     int imf_count = 0;
 
+    while ( (extrema_count > extrema_threshold) && (imf_count < 6) ) {
 
-    //Consider 7 imfs enough for images decomposition
-    while ( (extrema_count > extrema_threshold) && (imf_count < 150) ) {
-
-        qDebug()<<"imfs"<<imfs.at(imfs.length() -1).length();
         int win_size_prev = win_size;
 
         //Step 1
@@ -102,36 +95,36 @@ void fabemd_decomposer::DecomposeY()
             maxima_distances.clear();
             minima_distances.clear();
 
-            local_maxima.fill(-1.f);
-            local_minima.fill(-1.f);
+            local_maxima.Fill(-1.f);
+            local_minima.Fill(-1.f);
             Matrix2D<float> *cur_y = y_channels[k];
 
             //TODO create function detect_local_maxima()
             for ( int i = 1; i < ROWS - 1; ++i ) {
                 for ( int j = 1; j < COLUMNS - 1; ++j ) {
 
-                    if ( ( cur_y->valueAt(i, j) > cur_y->valueAt(i - 1, j - 1) ) &&
-                         ( cur_y->valueAt(i, j) > cur_y->valueAt(i - 1, j)     ) &&
-                         ( cur_y->valueAt(i, j) > cur_y->valueAt(i - 1, j + 1) ) &&
-                         ( cur_y->valueAt(i, j) > cur_y->valueAt(i, j - 1)     ) &&
-                         ( cur_y->valueAt(i, j) > cur_y->valueAt(i, j + 1)     ) &&
-                         ( cur_y->valueAt(i, j) > cur_y->valueAt(i + 1, j - 1) ) &&
-                         ( cur_y->valueAt(i, j) > cur_y->valueAt(i + 1, j)     ) &&
-                         ( cur_y->valueAt(i, j) > cur_y->valueAt(i + 1, j +1)  )){
-                            local_maxima.set_cell_value( static_cast<uint>(i), static_cast<uint>(j),  cur_y->valueAt(i, j));
+                    if ( ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i - 1, j - 1) ) &&
+                         ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i - 1, j)     ) &&
+                         ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i - 1, j + 1) ) &&
+                         ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i, j - 1)     ) &&
+                         ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i, j + 1)     ) &&
+                         ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i + 1, j - 1) ) &&
+                         ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i + 1, j)     ) &&
+                         ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i + 1, j +1)  )){
+                            local_maxima.SetCellValue( static_cast<uint>(i), static_cast<uint>(j),  cur_y->ValueAt(i, j));
                             //Fill the maxima distances with the biggest possible distance
                             maxima_distances.push_back(static_cast<float>(qSqrt(ROWS*ROWS + COLUMNS*COLUMNS)));
                      }
 
-                    if((cur_y->valueAt(i, j) < cur_y->valueAt(i - 1, j - 1)) &&
-                       (cur_y->valueAt(i, j) < cur_y->valueAt(i - 1, j))     &&
-                       (cur_y->valueAt(i, j) < cur_y->valueAt(i - 1, j + 1)) &&
-                       (cur_y->valueAt(i, j) < cur_y->valueAt(i, j - 1))     &&
-                       (cur_y->valueAt(i, j) < cur_y->valueAt(i, j + 1))     &&
-                       (cur_y->valueAt(i, j) < cur_y->valueAt(i + 1, j - 1)) &&
-                       (cur_y->valueAt(i, j) < cur_y->valueAt(i + 1, j))     &&
-                       (cur_y->valueAt(i, j) < cur_y->valueAt(i + 1, j +1))){
-                            local_minima.set_cell_value( static_cast<uint>(i), static_cast<uint>(j),  cur_y->valueAt(i, j));
+                    if((cur_y->ValueAt(i, j) < cur_y->ValueAt(i - 1, j - 1)) &&
+                       (cur_y->ValueAt(i, j) < cur_y->ValueAt(i - 1, j))     &&
+                       (cur_y->ValueAt(i, j) < cur_y->ValueAt(i - 1, j + 1)) &&
+                       (cur_y->ValueAt(i, j) < cur_y->ValueAt(i, j - 1))     &&
+                       (cur_y->ValueAt(i, j) < cur_y->ValueAt(i, j + 1))     &&
+                       (cur_y->ValueAt(i, j) < cur_y->ValueAt(i + 1, j - 1)) &&
+                       (cur_y->ValueAt(i, j) < cur_y->ValueAt(i + 1, j))     &&
+                       (cur_y->ValueAt(i, j) < cur_y->ValueAt(i + 1, j +1))){
+                            local_minima.SetCellValue( static_cast<uint>(i), static_cast<uint>(j),  cur_y->ValueAt(i, j));
                             //Fill the maxima distances with the biggest possible distance
                             minima_distances.push_back(static_cast<float>(qSqrt(ROWS*ROWS + COLUMNS*COLUMNS)));
                      }
@@ -168,25 +161,38 @@ void fabemd_decomposer::DecomposeY()
         }//for k < image_count
 
         win_size = std::max(upper_env_win_size, lower_env_win_size);
-        qDebug()<<"Extrema"<<extrema_count;
 
         for ( int k = 0; k < y_channels.count(); ++k ) {
             QString filename;
             Matrix2D<float> *upper_envelope = new Matrix2D<float>(*y_channels[k]);
-            upper_envelope->filterMax(win_size);
-            upper_envelope->filterMean(win_size);
+            auto start = std::chrono::steady_clock::now();
+
+            upper_envelope->FilterMax(win_size);
+            auto end = std::chrono::steady_clock::now();
+            std::cout << "MAX Filter: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< win_size<<"   "<<std::endl<< std::flush;
+            start = std::chrono::steady_clock::now();
+            upper_envelope->FilterMean(win_size);
+            end = std::chrono::steady_clock::now();
+            std::cout << "MEAN Filter: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< win_size<<"   "<<std::endl<< std::flush;
+
 
             Matrix2D<float> *lower_envelope = new Matrix2D<float>(*y_channels[k]);
-            lower_envelope->filterMin(win_size);
-            lower_envelope->filterMean(win_size);
+            start = std::chrono::steady_clock::now();
+            lower_envelope->FilterMin(win_size);
+            end = std::chrono::steady_clock::now();
+            std::cout << "MIN Filter: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< win_size<<"   "<<std::endl<< std::flush;
+            start = std::chrono::steady_clock::now();
+            lower_envelope->FilterMean(win_size);
+            end = std::chrono::steady_clock::now();
+            std::cout << "MEAN Filter: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< win_size<<"   "<<std::endl<< std::flush;
+
 
             Matrix2D<float> *imf = new Matrix2D<float>(*y_channels[k]);
             *imf = *y_channels[k] - (*upper_envelope + *lower_envelope)*0.5;
             imfs[k].push_back(imf);
 
-            fused_image = imf->matrix_to_image();
+            fused_image = imf->ConvertToQImage();
             filename = "Images/results/imf_" + QString::number(imfs.at(0).length()) + "_" + QString::number(k) + ".png";
-            qDebug()<<"saving imf"<<filename;
             fused_image->save(filename);
 
             //Update y-channel for the next iteration
@@ -204,14 +210,14 @@ void fabemd_decomposer::DecomposeY()
     }
 }
 
-int fabemd_decomposer::GetExtremaDistance(Matrix2D<float> *extrema, QVector<float> *extrema_distances)
+int FabemdFusion::GetExtremaDistance(Matrix2D<float> *extrema, QVector<float> *extrema_distances)
 {
     float const max_distance = extrema_distances->at(0);
     int counter = -1;
     for(int i = 1; i < ROWS - 1; ++i){
         for(int j = 1; j < COLUMNS - 1; ++j){
 
-            if(extrema->valueAt(i, j) >= 0){
+            if(extrema->ValueAt(i, j) >= 0){
                 bool distance_found   = false;
                 int win_half_size     = 2;
                 float distance        = max_distance;
@@ -223,7 +229,7 @@ int fabemd_decomposer::GetExtremaDistance(Matrix2D<float> *extrema, QVector<floa
                     //Top
                     int cur_row = i - win_half_size;
                     for ( int l = -win_half_size; l < win_half_size; ++l ) {
-                        if ( (((cur_row) > 0) && ((j+l) > 0) && ((cur_row) < ROWS) && ((j+l) < COLUMNS)) && (extrema->valueAt(cur_row, j+l) >= 0) ) {
+                        if ( (((cur_row) > 0) && ((j+l) > 0) && ((cur_row) < ROWS) && ((j+l) < COLUMNS)) && (extrema->ValueAt(cur_row, j+l) >= 0) ) {
                             if(static_cast<float>(qSqrt(win_half_size*win_half_size + l*l)) < distance_temp){
                                 distance_temp = static_cast<float>(qSqrt(win_half_size*win_half_size + l*l));
                             }
@@ -233,7 +239,7 @@ int fabemd_decomposer::GetExtremaDistance(Matrix2D<float> *extrema, QVector<floa
                     int cur_col = j - win_half_size;
                     for(int k = -win_half_size; k < win_half_size; ++k){
                         //If curr index is valid and the is a local extrema
-                        if((((i+k) > 0) && ((cur_col) > 0) && ((i+k) < ROWS) && ((cur_col) < COLUMNS)) && (extrema->valueAt(i + k, cur_col) >= 0)){
+                        if((((i+k) > 0) && ((cur_col) > 0) && ((i+k) < ROWS) && ((cur_col) < COLUMNS)) && (extrema->ValueAt(i + k, cur_col) >= 0)){
                             //Update distance_temp if the new distance is shorter
                             if(static_cast<float>(qSqrt(k*k + win_half_size*win_half_size)) < distance_temp){
                                 distance_temp = static_cast<float>(qSqrt(k*k + win_half_size*win_half_size));
@@ -245,7 +251,7 @@ int fabemd_decomposer::GetExtremaDistance(Matrix2D<float> *extrema, QVector<floa
                     cur_row = i + win_half_size;
                     for(int l = -win_half_size; l < win_half_size; ++l){
                         //If curr index is valid and the is a local extrema
-                        if((((cur_row) > 0) && ((j+l) > 0) && ((cur_row) < ROWS) && ((j+l) < COLUMNS)) && (extrema->valueAt(cur_row, j + l) >= 0)){
+                        if((((cur_row) > 0) && ((j+l) > 0) && ((cur_row) < ROWS) && ((j+l) < COLUMNS)) && (extrema->ValueAt(cur_row, j + l) >= 0)){
                             //Update distance_temp if the new distance is shorter
                             if(static_cast<float>(qSqrt(win_half_size*win_half_size + l*l)) < distance_temp){
                                 distance_temp = static_cast<float>(qSqrt(win_half_size*win_half_size + l*l));
@@ -256,7 +262,7 @@ int fabemd_decomposer::GetExtremaDistance(Matrix2D<float> *extrema, QVector<floa
                     cur_col = j + win_half_size;
                     for(int k = -win_half_size; k < win_half_size; ++k){
                         //If curr index is valid and the is a local extrema
-                        if((((i+k) > 0) && ((cur_col) > 0) && ((i+k) < ROWS) && ((cur_col) < COLUMNS)) && (extrema->valueAt(i + k, cur_col) >= 0)){
+                        if((((i+k) > 0) && ((cur_col) > 0) && ((i+k) < ROWS) && ((cur_col) < COLUMNS)) && (extrema->ValueAt(i + k, cur_col) >= 0)){
                             //Update distance_temp if the new distance is shorter
                             if(static_cast<float>(qSqrt(k*k + win_half_size*win_half_size)) < distance_temp){
                                 distance_temp = static_cast<float>(qSqrt(k*k + win_half_size*win_half_size));
@@ -281,11 +287,11 @@ int fabemd_decomposer::GetExtremaDistance(Matrix2D<float> *extrema, QVector<floa
     return min_val;
 }
 
-void fabemd_decomposer::FuseIMFs(int win_size)
+void FabemdFusion::FuseIMFs(int win_size)
 {
     int half_win = static_cast<int>(0.5*win_size);
 
-    qDebug()<<"Fuse imfs half win"<<half_win;
+    qDebug()<<"Fuse IMFs";
     const int images_count = imfs.length();
     const int imfs_depth   = imfs.at(0).length();
 
@@ -293,10 +299,9 @@ void fabemd_decomposer::FuseIMFs(int win_size)
 
     Matrix2D<float> *fused_y_channel = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
 
+    auto start = std::chrono::steady_clock::now();
     for ( int i = 0; i < imfs_depth; ++i ) {
         Matrix2D<float> *fused_imf = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
-
-        qDebug()<<"creating imf"<< i;
 
         for ( int x = 0; x < ROWS; ++x ) {
             for ( int y = 0; y < COLUMNS; ++y ) {
@@ -322,10 +327,10 @@ void fabemd_decomposer::FuseIMFs(int win_size)
                                 column -= COLUMNS;
                             }
 
-                            local_energy += imfs.at(j).at(i)->valueAt(row, column) * imfs.at(j).at(i)->valueAt(row, column);
+                            local_energy += imfs.at(j).at(i)->ValueAt(row, column) * imfs.at(j).at(i)->ValueAt(row, column);
                         }
                     }
-                    nom   += local_energy*imfs.at(j).at(i)->valueAt(x, y);
+                    nom   += local_energy*imfs.at(j).at(i)->ValueAt(x, y);
                     denom += local_energy;
 
                 }//images_count
@@ -335,11 +340,11 @@ void fabemd_decomposer::FuseIMFs(int win_size)
                     nom   = 0.f;
                     denom = 1.f;
                 }
-                fused_imf->set_cell_value(static_cast<uint>(x), static_cast<uint>(y), nom/denom);
+                fused_imf->SetCellValue(static_cast<uint>(x), static_cast<uint>(y), nom/denom);
             } //columns
         } //rows
 
-        fused_image = fused_imf->matrix_to_image();
+        fused_image = fused_imf->ConvertToQImage();
         QString filename = "Images/results/imf_fused_" + QString::number(i) + ".png";
         fused_image->save(filename);
         filename = "Images/results/imf_fused_" + QString::number(i) + ".txt";
@@ -349,7 +354,11 @@ void fabemd_decomposer::FuseIMFs(int win_size)
 
     } //imfs_depth
 
-//    fused_y_channel->ScaleToInterval(16, 236);
-    fused_image = fused_y_channel->matrix_to_image();
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "Fuse IMFs runtime: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms"<<std::endl<< std::flush;
+
+
+    fused_y_channel->ScaleToInterval(16, 236);
+    fused_image = fused_y_channel->ConvertToQImage();
     fused_image->save("Images/results/output.png");
 }

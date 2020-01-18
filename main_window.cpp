@@ -10,7 +10,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    fabemdDecomposer =  std::make_unique<fabemd_decomposer>();
+    fabemdDecomposer =  std::make_unique<FabemdFusion>();
     fabemdDecomposer->SetInputImages(&inputImages);
 
     scene = new QGraphicsScene(this);
@@ -68,13 +68,15 @@ void MainWindow::on_actionOpen_Images_triggered()
             imageLabel->setFixedSize(320, 240);
         }
         //********************
+        scene->clear();
     }
 }
 
 void MainWindow::on_pushButton_released()
-{
-    fabemdDecomposer->SetResX(inputImages.at(0)->width());
-    fabemdDecomposer->SetResY(inputImages.at(0)->height());
-    fabemdDecomposer->FuseImages();
+{ 
+    int resy = inputImages.at(0)->height();
+    int resx = inputImages.at(0)->width();
+
+    fabemdDecomposer->FuseImages(resx, resy);
     SetFusedImage(fabemdDecomposer->GetFusedImage());
 }

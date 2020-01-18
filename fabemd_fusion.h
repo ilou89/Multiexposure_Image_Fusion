@@ -4,16 +4,13 @@
 #include <QImage>
 #include "matrix_2d.h"
 
-class fabemd_decomposer
+class FabemdFusion
 {
 public:
-    fabemd_decomposer();
+    FabemdFusion();
 
-    void FuseImages();
+    void FuseImages(int rows_, int columns_);
     void SetInputImages(QVector<QImage *> *images);
-    void SetResX(int value);
-    void SetResY(int value);
-
     QImage *GetFusedImage();
 
 private:
@@ -22,7 +19,6 @@ private:
     QVector<Matrix2D<float> *> y_channels;
     QVector<Matrix2D<float> *> cb_channels;
     QVector<Matrix2D<float> *> cr_channels;
-
     QVector<QVector<Matrix2D<float> *>> imfs;
 
     void RGBToYCbCr();
@@ -31,6 +27,7 @@ private:
     int ROWS, COLUMNS;
 
     void FuseIMFs(int win_size);
+    void FuseCb();
     QImage *fused_image;
 };
 

@@ -1,5 +1,6 @@
 #include "matrix_2d.h"
 #include "QFile"
+#include "QDebug"
 #include <math.h>
 #include <iostream>
 #include <chrono>
@@ -15,7 +16,7 @@ Matrix2D<T>::Matrix2D(uint rows_, uint columns_)
       columns = columns_;
 
       //Initialize all values to 0.f
-      fill(0.f);
+      Fill(0.f);
 }
 
 template<typename T>
@@ -81,69 +82,52 @@ Matrix2D<T> Matrix2D<T>::operator*(const T value)
 }
 
 template<typename T>
-bool Matrix2D<T>::compare(const Matrix2D &m2)
+bool Matrix2D<T>::Compare(const Matrix2D &m2)
 {
-    qDebug()<<"compare matrices";
     for (int i = 0; i < rows; ++i){
         for (int j = 0; j < columns; ++j){
             if ( this->mat[i][j] - m2.mat[i][j] > 1.f) {
-                qDebug()<< this->mat[i][j] << " vs " << m2.mat[i][j];
-//                return false;
+                return false;
             }
         }
     }
     return true;
 }
 
-//template<typename T>
-//bool Matrix2D<T>::operator==(const Matrix2D&m)
-//{
-//    qDebug()<<"compare matrices";
-//    for (int i = 0; i < rows; ++i){
-//        for (int j = 0; j < columns; ++j){
-//            if ( this->mat[i][j] != m.mat[i][j] ) {
-//                qDebug()<< this->mat[i][j] << " vs " << m.mat[i][j];
-//                return false;
-//            }
-//        }
-//    }
-//    return true;
-//}
-
 template<typename T>
 Matrix2D<T>::~Matrix2D()
 {
     // We do not use dynamic memory allocation (new),
     // thus destruction will do nothing here. Make it virtual
-    // so that future subclasses can perform their own destruction
+    // so that future subclasses can perform their own object destruction
 }
 
 template<typename T>
-uint Matrix2D<T>::get_rows()
+uint Matrix2D<T>::GetRows()
 {
     return rows;
 }
 
 template<typename T>
-uint Matrix2D<T>::get_columns()
+uint Matrix2D<T>::GetColumns()
 {
     return columns;
 }
 
 template<typename T>
-T Matrix2D<T>::valueAt(int i, int j)
+T Matrix2D<T>::ValueAt(const int i, const int j)
 {
     return mat[i][j];
 }
 
 template<typename T>
-void Matrix2D<T>::set_cell_value(uint i, uint j, T value)
+void Matrix2D<T>::SetCellValue(const int i, const int j, const T value)
 {
     mat[i][j] = value;
 }
 
 template<typename T>
-void Matrix2D<T>::fill(T value)
+void Matrix2D<T>::Fill(const T value)
 {
     for (int i=0; i<mat.size(); i++) {
       std::fill(mat[i].begin(), mat[i].end(), value);
@@ -151,7 +135,7 @@ void Matrix2D<T>::fill(T value)
 }
 
 template<typename T>
-QImage* Matrix2D<T>::matrix_to_image()
+QImage* Matrix2D<T>::ConvertToQImage()
 {
     QImage *image = new QImage(this->rows, this->columns, QImage::Format_RGB32);
 
@@ -159,12 +143,12 @@ QImage* Matrix2D<T>::matrix_to_image()
         for(int j = 0; j < image->height(); ++j){
 
             QRgb color = 0xff000000;
-            if(this->valueAt(i, j) > 255.f){
+            if(this->ValueAt(i, j) > 255.f){
                 color = 0xffffffff;
-            }else if(this->valueAt(i, j) < 0.f){
+            }else if(this->ValueAt(i, j) < 0.f){
                 color = 0xff000000;
             }else{
-                color = qRgb(static_cast<int>(this->valueAt(i, j)), static_cast<int>(this->valueAt(i, j)), static_cast<int>(this->valueAt(i, j)));
+                color = qRgb(static_cast<int>(this->ValueAt(i, j)), static_cast<int>(this->ValueAt(i, j)), static_cast<int>(this->ValueAt(i, j)));
             }
 
             image->setPixel(i, j, color);
@@ -175,17 +159,13 @@ QImage* Matrix2D<T>::matrix_to_image()
 }
 
 template<typename T>
-void Matrix2D<T>::filterMax(const int filter_size)
+void Matrix2D<T>::FilterMax(const int filter_size)
 {
     int half_size = filter_size/2;
     Matrix2D<float> temp_matrix(rows, columns);
 
-    auto start = std::chrono::steady_clock::now();
-
     for ( int i = 0; i < rows; ++i ) {
         for ( int j = 0; j < columns; ++j ) {
-            float buffer[filter_size * filter_size];
-            int index = 0;
             float max_value = -1.f;
             for(int k = -half_size; k <= half_size; ++k){
                 for(int l = -half_size; l <= half_size; ++l){
@@ -210,9 +190,6 @@ void Matrix2D<T>::filterMax(const int filter_size)
         }
     }
 
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "MAX Filter: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< filter_size<<"   "<<std::endl<< std::flush;
-
     for(int i = 0; i < rows; ++i){
         for(int j = 0; j < columns; ++j){
             mat[i][j] = temp_matrix.mat[i][j];
@@ -221,13 +198,10 @@ void Matrix2D<T>::filterMax(const int filter_size)
 }
 
 template<typename T>
-void Matrix2D<T>::filterMin(int filter_size)
+void Matrix2D<T>::FilterMin(const int filter_size)
 {
     int half_size = filter_size/2;
-//    qDebug()<<"half size"<<half_size;
     Matrix2D<float> temp_matrix(rows, columns);
-
-    auto start = std::chrono::steady_clock::now();
 
     for(int i = 0; i < rows; ++i){
         for(int j = 0; j < columns; ++j){
@@ -267,9 +241,6 @@ void Matrix2D<T>::filterMin(int filter_size)
         }
     }
 
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "MIN Filter: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< filter_size<<"   "<<std::endl<< std::flush;
-
     for(int i = 0; i < rows; ++i){
         for(int j = 0; j < columns; ++j){
             mat[i][j] = temp_matrix.mat[i][j];
@@ -278,7 +249,7 @@ void Matrix2D<T>::filterMin(int filter_size)
 }
 
 template<typename T>
-void Matrix2D<T>::filterMean(int filter_size)
+void Matrix2D<T>::FilterMean(const int filter_size)
 {
     //Mean Filter is separable, thus the convolution will be performed in two passes: row and column-wise
     int half_size = static_cast<int>(floor(filter_size/2));
@@ -305,8 +276,6 @@ void Matrix2D<T>::filterMean(int filter_size)
                 if ( row >= 0 && row < rows ) {
                     pixels_count++;
                     new_value += mat[row][j];
-                } else {
-                    qDebug()<<"EEEEEEErroooor";
                 }
             }
             temp_matrix.mat[i][j] = new_value/pixels_count;
@@ -333,8 +302,6 @@ void Matrix2D<T>::filterMean(int filter_size)
                 if ( column >= 0 && column < columns ) {
                     pixels_count++;
                     new_value += temp_matrix.mat[i][column];
-                } else {
-                    qDebug()<<"EEEEEEErroooor";
                 }
             }
             temp_matrix2.mat[i][j] = new_value/pixels_count;
@@ -396,7 +363,7 @@ void Matrix2D<T>::filterMean(int filter_size)
 }
 
 template<typename T>
-void Matrix2D<T>::ScaleToInterval(T start, T end)
+void Matrix2D<T>::ScaleToInterval(const T start, const T end)
 {
     const T min = GetMinValue();
     const T max = GetMaxValue();
@@ -439,7 +406,7 @@ T Matrix2D<T>::GetMaxValue()
 }
 
 template<typename T>
-void Matrix2D<T>::SaveToFile(QString filename)
+void Matrix2D<T>::SaveToFile(const QString filename)
 {
     qDebug()<<"saving to"<<filename;
 

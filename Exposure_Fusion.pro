@@ -27,13 +27,13 @@ CONFIG += c++14
 SOURCES += \
         main.cpp \
         main_window.cpp \
-    fabemd_decomposer.cpp
+    fabemd_fusion.cpp
     #matrix.cpp
 
 HEADERS += \
         main_window.h \
-    fabemd_decomposer.h \
-    matrix_2d.h
+    matrix_2d.h \
+    fabemd_fusion.h
 
 FORMS += \
         mainwindow.ui
