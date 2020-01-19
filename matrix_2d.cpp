@@ -162,11 +162,11 @@ template<typename T>
 void Matrix2D<T>::FilterMax(const int filter_size)
 {
     int half_size = filter_size/2;
-    Matrix2D<float> temp_matrix(rows, columns);
+    Matrix2D<T> temp_matrix(rows, columns);
 
     for ( int i = 0; i < rows; ++i ) {
         for ( int j = 0; j < columns; ++j ) {
-            float max_value = -1.f;
+            T max_value = -1.f;
             for(int k = -half_size; k <= half_size; ++k){
                 for(int l = -half_size; l <= half_size; ++l){
                     int row    = i + k;
@@ -201,12 +201,12 @@ template<typename T>
 void Matrix2D<T>::FilterMin(const int filter_size)
 {
     int half_size = filter_size/2;
-    Matrix2D<float> temp_matrix(rows, columns);
+    Matrix2D<T> temp_matrix(rows, columns);
 
     for(int i = 0; i < rows; ++i){
         for(int j = 0; j < columns; ++j){
 
-            float min_value = 255.f;
+            T min_value = 255.f;
 
             //Find minimum value inside the filter window
             for(int k = -half_size; k <= half_size; ++k){
@@ -254,13 +254,13 @@ void Matrix2D<T>::FilterMean(const int filter_size)
     //Mean Filter is separable, thus the convolution will be performed in two passes: row and column-wise
     int half_size = static_cast<int>(floor(filter_size/2));
 
-    Matrix2D<float> temp_matrix(rows, columns);
+    Matrix2D<T> temp_matrix(rows, columns);
 
 #if 1
     //Row-wise convolution
     for(int i = 0; i < rows; ++i ) {
         for(int j = 0; j < columns; ++j){
-            float new_value  = 0.f;
+            T new_value      = 0.f;
             int pixels_count = 0;
             for(int k = -half_size; k <= half_size; ++k){
                 int row = i + k;
@@ -282,11 +282,11 @@ void Matrix2D<T>::FilterMean(const int filter_size)
         }
     }
 
-    Matrix2D<float> temp_matrix2(rows, columns);
+    Matrix2D<T> temp_matrix2(rows, columns);
     //Column-wise convolution
     for(int i = 0; i < rows; ++i ) {
         for(int j = 0; j < columns; ++j){
-            float new_value  = 0.f;
+            T new_value      = 0.f;
             int pixels_count = 0;
             for(int k = -half_size; k <= half_size; ++k){
                 int column = j + k;
@@ -314,7 +314,7 @@ void Matrix2D<T>::FilterMean(const int filter_size)
     for(int i = 0; i < rows; ++i){
         for(int j = 0; j < columns; ++j){
 
-                float new_value = 0.f;
+                T      new_value = 0.f;
                 int pixels_count = 0;
                 for(int k = -half_size; k <= half_size; ++k){
                     for(int l = -half_size; l <= half_size; ++l){
