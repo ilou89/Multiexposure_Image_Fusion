@@ -101,6 +101,10 @@ void FabemdFusion::YCbCrToRGB()
             g = (g > 255) ? 255 : g;
             b = (b > 255) ? 255 : b;
 
+            r = (r < 0) ? 0 : r;
+            g = (g < 0) ? 0 : g;
+            b = (b < 0) ? 0 : b;
+
             QRgb color = qRgb(r, g, b);
 
             fused_image->setPixel(i, j, color);
