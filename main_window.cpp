@@ -24,6 +24,8 @@ void MainWindow::SetFusedImage(QImage *fused_image)
     if(pix.isNull()==0){
         scene->addPixmap(pix);
     }
+
+//    ui->graphicsView->fitInView(pix.rect());
 }
 
 MainWindow::~MainWindow()
@@ -36,9 +38,8 @@ void MainWindow::on_actionOpen_Images_triggered()
     QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Open Images"), QDir::currentPath(), tr("Image Files (*.png *.jpg *.bmp)"));
     if( !filenames.isEmpty() )
     {
-        //TODO: not sure if memory free should be performed as it is...
+        //TODO: not sure if memory dealocation should be performed as it is...
         //Clear previous input
-        //********************
         for(int i = 0; i < in_im_widgets.length(); ++i){
             delete in_im_widgets.at(i);
         }
@@ -48,11 +49,13 @@ void MainWindow::on_actionOpen_Images_triggered()
         }
         in_im_widgets.clear();
         inputImages.clear();
-        //********************
-
 
         //Create ui widgets, load images
-        //********************
+        image_count = filenames.count();
+        QImage* first_image = new QImage(filenames.at(0));
+        aspect_ratio = static_cast<float>(first_image->width())/static_cast<float>(first_image->height());
+        int height = ui->graphicsView->height()/filenames.count();
+        int width  = static_cast<int>(aspect_ratio*height);
         for (int i =0;i<filenames.count();i++){
             QLabel* imageLabel = new QLabel(this);
             imageLabel->setScaledContents(true);
@@ -62,12 +65,11 @@ void MainWindow::on_actionOpen_Images_triggered()
             QImage* image = new QImage(filenames.at(i));
             inputImages.push_back(image);
 
-            float image_ratio = static_cast<float>(image->width())/static_cast<float>(image->height());
-            qDebug()<<image->width() << image->height()<<image_ratio;
             imageLabel->setPixmap(QPixmap::fromImage(*image));
-            imageLabel->setFixedSize(320, 240);
+            imageLabel->setFixedSize(width, height);
         }
-        //********************
+
+        delete first_image;
         scene->clear();
     }
 }
@@ -83,5 +85,6 @@ void MainWindow::on_pushButton_released()
 
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
-    qDebug()<<"resize event";
+    Q_UNUSED(event);
+    ui->graphicsView->mapToScene(ui->graphicsView->viewport()->rect().center());
 }

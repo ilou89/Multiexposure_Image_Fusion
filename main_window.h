@@ -35,6 +35,8 @@ private:
     std::unique_ptr<FabemdFusion> fabemdDecomposer;
     QGraphicsScene *scene;
     QGraphicsPixmapItem* output_picture;
+    int image_count;
+    float aspect_ratio;
 };
 
 #endif // MAIN_WINDOW_H
