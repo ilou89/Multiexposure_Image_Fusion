@@ -6,7 +6,7 @@
 template <typename T> class Matrix2D
 {
 public:
-    Matrix2D(uint rows_, uint columns_);
+    Matrix2D(const uint rows_, const uint columns_);
     Matrix2D(const Matrix2D &p2);
 
     //Implement operators as friends

@@ -6,7 +6,7 @@
 #include <chrono>
 
 template<typename T>
-Matrix2D<T>::Matrix2D(uint rows_, uint columns_)
+Matrix2D<T>::Matrix2D(const uint rows_, const uint columns_)
 {
     mat.resize(rows_);
       for (int i=0; i<mat.size(); i++) {
@@ -97,7 +97,7 @@ bool Matrix2D<T>::Compare(const Matrix2D &m2)
 template<typename T>
 Matrix2D<T>::~Matrix2D()
 {
-    // We do not use dynamic memory allocation (new),
+    // We do not use dynamic memory allocation within this class,
     // thus destruction will do nothing here. Make it virtual
     // so that future subclasses can perform their own object destruction
 }

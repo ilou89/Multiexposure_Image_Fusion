@@ -7,13 +7,17 @@
 
 FabemdFusion::FabemdFusion()
 {
-
+    ROWS        = 0;
+    COLUMNS     = 0;
+    scale_y     = true;
+    fused_image = nullptr;
 }
 
-void FabemdFusion::FuseImages(int rows_, int columns_)
+void FabemdFusion::FuseImages(const int rows_, const int columns_)
 {
-    ROWS    = rows_;
-    COLUMNS = columns_;
+    ROWS        = rows_;
+    COLUMNS     = columns_;
+    fused_image = nullptr;
 
     y_channels.clear();
     cb_channels.clear();
@@ -23,7 +27,8 @@ void FabemdFusion::FuseImages(int rows_, int columns_)
     RGBToYCbCr();
     DecomposeY();
     FuseIMFs(3);
-    //TODO fuse Cb, Cr
+    FuseCbCr();
+    YCbCrToRGB();
 }
 
 void FabemdFusion::SetInputImages(QVector<QImage *> *images)
@@ -52,17 +57,57 @@ void FabemdFusion::RGBToYCbCr()
                 float green = static_cast<float>(rgb.green());
                 float blue  = static_cast<float>(rgb.blue());
 
-                y_channel-> SetCellValue(static_cast<uint>(i), static_cast<uint>(j), 16.f  +  65.738f*red/256.f + 129.057f*green/256.f +  25.064f*blue/256.f);
-                cb_channel->SetCellValue(static_cast<uint>(i), static_cast<uint>(j), 128.f -  37.945f*red/256.f -  74.494f*green/256.f + 112.439f*blue/256.f);
-                cr_channel->SetCellValue(static_cast<uint>(i), static_cast<uint>(j), 128.f + 112.439f*red/256.f -  94.154f*green/256.f -  18.285f*blue/256.f);
+#if 1
+                y_channel-> SetCellValue(i, j, 16.f  +  65.738f*red/256.f + 129.057f*green/256.f +  25.064f*blue/256.f);
+                cb_channel->SetCellValue(i, j, 128.f -  37.945f*red/256.f -  74.494f*green/256.f + 112.439f*blue/256.f);
+                cr_channel->SetCellValue(i, j, 128.f + 112.439f*red/256.f -  94.154f*green/256.f -  18.285f*blue/256.f);
+#else
+                y_channel-> SetCellValue(i, j,  0.257f*red + 0.504f*green + 0.098f*blue + 16.0f);
+                cb_channel->SetCellValue(i, j, -0.148f*red - 0.291f*green + 0.439f*blue + 128.f);
+                cr_channel->SetCellValue(i, j,  0.439f*red - 0.368f*green - 0.071f*blue + 128.f);
+#endif
             }
         }
 
-        //push channels to lists (vectors)
         y_channels.push_back(y_channel);
         cb_channels.push_back(cb_channel);
         cr_channels.push_back(cr_channel);
     }
+}
+
+void FabemdFusion::YCbCrToRGB()
+{
+    fused_image = new QImage(ROWS, COLUMNS, QImage::Format_RGB888);
+
+    for ( int i = 0; i < ROWS; ++i ) {
+        for ( int j = 0; j < COLUMNS; ++j ) {
+            float y  = fused_y->ValueAt(i,j);
+            float cb = fused_cb->ValueAt(i,j);
+            float cr = fused_cr->ValueAt(i,j);
+
+            //TODO values get out of range...not sure what causes it (wrong conversion here, or wrong conversion at rgb2ycbcr)
+#if 1
+            int r = static_cast<int>(298.082f*y/256.f + 408.583f*cr/256.f - 222.921f);
+            int g = static_cast<int>(298.082f*y/256.f - 100.291f*cb/256.f - 208.120f*cr/256.f + 135.576f);
+            int b = static_cast<int>(298.082f*y/256.f + 516.412f*cb/256.f - 276.836f);
+#else
+            int r = static_cast<int>(1.164f*(y - 16.f) + 1.596f*(cr - 128.f));
+            int g = static_cast<int>(1.164f*(y - 16.f) - 0.813f*(cr - 128.f) - 0.392f*(cb - 128.f));
+            int b = static_cast<int>(1.160f*(y - 16.f) + 2.017f*(cb - 128));
+#endif
+
+            //temp fix
+            r = (r > 255) ? 255 : r;
+            g = (g > 255) ? 255 : g;
+            b = (b > 255) ? 255 : b;
+
+            QRgb color = qRgb(r, g, b);
+
+            fused_image->setPixel(i, j, color);
+        }
+    }
+
+    fused_image->save("Images/results/output.png");
 }
 
 void FabemdFusion::DecomposeY()
@@ -111,7 +156,7 @@ void FabemdFusion::DecomposeY()
                          ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i + 1, j - 1) ) &&
                          ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i + 1, j)     ) &&
                          ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i + 1, j +1)  )){
-                            local_maxima.SetCellValue( static_cast<uint>(i), static_cast<uint>(j),  cur_y->ValueAt(i, j));
+                            local_maxima.SetCellValue( i, j,  cur_y->ValueAt(i, j));
                             //Fill the maxima distances with the biggest possible distance
                             maxima_distances.push_back(static_cast<float>(qSqrt(ROWS*ROWS + COLUMNS*COLUMNS)));
                      }
@@ -124,7 +169,7 @@ void FabemdFusion::DecomposeY()
                        (cur_y->ValueAt(i, j) < cur_y->ValueAt(i + 1, j - 1)) &&
                        (cur_y->ValueAt(i, j) < cur_y->ValueAt(i + 1, j))     &&
                        (cur_y->ValueAt(i, j) < cur_y->ValueAt(i + 1, j +1))){
-                            local_minima.SetCellValue( static_cast<uint>(i), static_cast<uint>(j),  cur_y->ValueAt(i, j));
+                            local_minima.SetCellValue( i, j,  cur_y->ValueAt(i, j));
                             //Fill the maxima distances with the biggest possible distance
                             minima_distances.push_back(static_cast<float>(qSqrt(ROWS*ROWS + COLUMNS*COLUMNS)));
                      }
@@ -287,17 +332,15 @@ int FabemdFusion::GetExtremaDistance(Matrix2D<float> *extrema, QVector<float> *e
     return min_val;
 }
 
-void FabemdFusion::FuseIMFs(int win_size)
+void FabemdFusion::FuseIMFs(const int win_size)
 {
-    int half_win = static_cast<int>(0.5*win_size);
-
-    qDebug()<<"Fuse IMFs";
+    const int half_win     = static_cast<int>(0.5*win_size);
     const int images_count = imfs.length();
     const int imfs_depth   = imfs.at(0).length();
 
     QVector<float> weights;
 
-    Matrix2D<float> *fused_y_channel = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+    fused_y = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
 
     auto start = std::chrono::steady_clock::now();
     for ( int i = 0; i < imfs_depth; ++i ) {
@@ -336,11 +379,11 @@ void FabemdFusion::FuseIMFs(int win_size)
                 }//images_count
 
                 // Avoid divisions with very small values, set pixel to 0
-                if ( denom < 0.001f){
+                if ( denom < 0.0001f){
                     nom   = 0.f;
                     denom = 1.f;
                 }
-                fused_imf->SetCellValue(static_cast<uint>(x), static_cast<uint>(y), nom/denom);
+                fused_imf->SetCellValue(x, y, nom/denom);
             } //columns
         } //rows
 
@@ -350,15 +393,57 @@ void FabemdFusion::FuseIMFs(int win_size)
         filename = "Images/results/imf_fused_" + QString::number(i) + ".txt";
         fused_imf->SaveToFile(filename);
 
-        *fused_y_channel = *fused_y_channel + *fused_imf;
+        *fused_y = *fused_y + *fused_imf;
 
     } //imfs_depth
 
     auto end = std::chrono::steady_clock::now();
     std::cout << "Fuse IMFs runtime: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms"<<std::endl<< std::flush;
 
+    if (scale_y == true) {
+        fused_y->ScaleToInterval(16, 236);
+    }
+}
 
-    fused_y_channel->ScaleToInterval(16, 236);
-    fused_image = fused_y_channel->ConvertToQImage();
-    fused_image->save("Images/results/output.png");
+void FabemdFusion::FuseCbCr()
+{
+    fused_cb = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+    fused_cr = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+
+    const int images_count = cb_channels.length();
+
+    RestoreYChannels();
+
+    for ( int i = 0; i < ROWS; ++i ) {
+        for ( int j = 0; j < COLUMNS; ++j ) {
+
+            float y  = y_channels.at(0)->ValueAt(i, j);
+            float cb = cb_channels.at(0)->ValueAt(i, j);
+            float cr = cr_channels.at(0)->ValueAt(i, j);
+
+            for (int k = 1; k < images_count; ++k ) {
+
+                if ( fabs(y_channels.at(k)->ValueAt(i, j) - 128.f) < fabs(y - 128.f) ) {
+                    y  = y_channels.at(k)->ValueAt(i, j);
+                    cb = cb_channels.at(k)->ValueAt(i, j);
+                    cr = cr_channels.at(k)->ValueAt(i, j);
+                }
+            }
+
+            fused_cb->SetCellValue(i, j, cb);
+            fused_cr->SetCellValue(i, j, cr);
+        }
+    }
+}
+
+void FabemdFusion::RestoreYChannels()
+{
+    const int images_count = imfs.length();
+    const int imfs_depth   = imfs.at(0).length();
+
+    for ( int i = 0; i < images_count; ++i ) {
+        for ( int j =0; j < imfs_depth; ++j ) {
+            *y_channels[i] = *y_channels[i] + *imfs.at(i).at(j);
+        }
+    }
 }

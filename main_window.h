@@ -28,6 +28,7 @@ private slots:
     void on_pushButton_released();
 
 private:
+    void resizeEvent(QResizeEvent* event);
     Ui::MainWindow *ui;
     QVector<QLabel*> in_im_widgets;
     QVector<QImage*> inputImages;

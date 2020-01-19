@@ -9,7 +9,7 @@ class FabemdFusion
 public:
     FabemdFusion();
 
-    void FuseImages(int rows_, int columns_);
+    void FuseImages(const int rows_, const int columns_);
     void SetInputImages(QVector<QImage *> *images);
     QImage *GetFusedImage();
 
@@ -22,13 +22,20 @@ private:
     QVector<QVector<Matrix2D<float> *>> imfs;
 
     void RGBToYCbCr();
+    void YCbCrToRGB();
     void DecomposeY();
     int GetExtremaDistance(Matrix2D<float> *extrema, QVector<float> *extrema_distance);
     int ROWS, COLUMNS;
-
-    void FuseIMFs(int win_size);
-    void FuseCb();
+    bool scale_y;
+    void FuseIMFs(const int win_size);
+    void FuseCbCr();
+    void RestoreYChannels();
     QImage *fused_image;
+
+    Matrix2D<float> *fused_y;
+    Matrix2D<float> *fused_cb;
+    Matrix2D<float> *fused_cr;
+
 };
 
 #endif // FABEMD_DECOMPOSER_H

@@ -80,3 +80,8 @@ void MainWindow::on_pushButton_released()
     fabemdDecomposer->FuseImages(resx, resy);
     SetFusedImage(fabemdDecomposer->GetFusedImage());
 }
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    qDebug()<<"resize event";
+}
