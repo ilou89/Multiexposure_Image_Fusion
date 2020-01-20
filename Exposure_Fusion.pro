@@ -27,13 +27,15 @@ CONFIG += c++14
 SOURCES += \
         main.cpp \
         main_window.cpp \
-    fabemd_fusion.cpp
+    fabemd_fusion.cpp \
+    zoom_graphics_view.cpp
     #matrix.cpp
 
 HEADERS += \
         main_window.h \
     matrix_2d.h \
-    fabemd_fusion.h
+    fabemd_fusion.h \
+    zoom_graphics_view.h
 
 FORMS += \
         mainwindow.ui

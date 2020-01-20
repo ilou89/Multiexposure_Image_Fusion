@@ -8,7 +8,7 @@
 #include <QImage>
 #include <memory>
 #include "fabemd_fusion.h"
-
+#include "zoom_graphics_view.h"
 
 namespace Ui {
 class MainWindow;

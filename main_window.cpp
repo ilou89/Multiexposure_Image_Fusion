@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
     fabemdDecomposer->SetInputImages(&inputImages);
 
     scene = new QGraphicsScene(this);
-    ui->graphicsView->setScene(scene);
+    ui->GraphicsView->setScene(scene);
 }
 
 void MainWindow::SetFusedImage(QImage *fused_image)
@@ -54,7 +54,7 @@ void MainWindow::on_actionOpen_Images_triggered()
         image_count = filenames.count();
         QImage* first_image = new QImage(filenames.at(0));
         aspect_ratio = static_cast<float>(first_image->width())/static_cast<float>(first_image->height());
-        int height = ui->graphicsView->height()/filenames.count();
+        int height = ui->GraphicsView->height()/filenames.count();
         int width  = static_cast<int>(aspect_ratio*height);
         for (int i =0;i<filenames.count();i++){
             QLabel* imageLabel = new QLabel(this);
@@ -86,5 +86,5 @@ void MainWindow::on_pushButton_released()
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     Q_UNUSED(event);
-    ui->graphicsView->mapToScene(ui->graphicsView->viewport()->rect().center());
+    ui->GraphicsView->mapToScene(ui->GraphicsView->viewport()->rect().center());
 }
