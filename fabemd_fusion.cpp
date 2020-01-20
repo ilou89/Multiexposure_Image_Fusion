@@ -57,14 +57,14 @@ void FabemdFusion::RGBToYCbCr()
                 float green = static_cast<float>(rgb.green());
                 float blue  = static_cast<float>(rgb.blue());
 
-#if 1
+#if 0
                 y_channel-> SetCellValue(i, j, 16.f  +  65.738f*red/256.f + 129.057f*green/256.f +  25.064f*blue/256.f);
                 cb_channel->SetCellValue(i, j, 128.f -  37.945f*red/256.f -  74.494f*green/256.f + 112.439f*blue/256.f);
                 cr_channel->SetCellValue(i, j, 128.f + 112.439f*red/256.f -  94.154f*green/256.f -  18.285f*blue/256.f);
 #else
-                y_channel-> SetCellValue(i, j,  0.257f*red + 0.504f*green + 0.098f*blue + 16.0f);
-                cb_channel->SetCellValue(i, j, -0.148f*red - 0.291f*green + 0.439f*blue + 128.f);
-                cr_channel->SetCellValue(i, j,  0.439f*red - 0.368f*green - 0.071f*blue + 128.f);
+                y_channel-> SetCellValue(i, j,  0.299000f*red + 0.587000f*green + 0.114000f*blue);
+                cb_channel->SetCellValue(i, j, -0.168736f*red - 0.331264f*green + 0.500000f*blue + 128.f);
+                cr_channel->SetCellValue(i, j,  0.500000f*red - 0.418688f*green - 0.081312f*blue + 128.f);
 #endif
             }
         }
@@ -86,17 +86,17 @@ void FabemdFusion::YCbCrToRGB()
             float cr = fused_cr->ValueAt(i,j);
 
             //TODO values get out of range...not sure what causes it (wrong conversion here, or wrong conversion at rgb2ycbcr)
-#if 1
+#if 0
             int r = static_cast<int>(298.082f*y/256.f + 408.583f*cr/256.f - 222.921f);
             int g = static_cast<int>(298.082f*y/256.f - 100.291f*cb/256.f - 208.120f*cr/256.f + 135.576f);
             int b = static_cast<int>(298.082f*y/256.f + 516.412f*cb/256.f - 276.836f);
 #else
-            int r = static_cast<int>(1.164f*(y - 16.f) + 1.596f*(cr - 128.f));
-            int g = static_cast<int>(1.164f*(y - 16.f) - 0.813f*(cr - 128.f) - 0.392f*(cb - 128.f));
-            int b = static_cast<int>(1.160f*(y - 16.f) + 2.017f*(cb - 128));
+            int r = static_cast<int>( y + 1.402f*(cr - 128.f) );
+            int g = static_cast<int>( y - 0.344136f*(cb - 128.f) - 0.714136f*(cr - 128.f) );
+            int b = static_cast<int>( y + 1.772f*(cb - 128.f) );
 #endif
 
-            //temp fix
+            //Fix pixels out or range
             r = (r > 255) ? 255 : r;
             g = (g > 255) ? 255 : g;
             b = (b > 255) ? 255 : b;
@@ -134,7 +134,7 @@ void FabemdFusion::DecomposeY()
     //Control the decomposition granularity. Trade-off between performance for image quality
     int imf_count = 0;
 
-    while ( (extrema_count > extrema_threshold) && (imf_count < 6) ) {
+    while ( (extrema_count > extrema_threshold) && (imf_count < 8) ) {
 
         int win_size_prev = win_size;
 
@@ -405,7 +405,7 @@ void FabemdFusion::FuseIMFs(const int win_size)
     std::cout << "Fuse IMFs runtime: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms"<<std::endl<< std::flush;
 
     if (scale_y == true) {
-        fused_y->ScaleToInterval(16, 236);
+        fused_y->ScaleToInterval(0, 255);
     }
 }
 
