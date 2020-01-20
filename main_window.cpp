@@ -76,6 +76,10 @@ void MainWindow::on_actionOpen_Images_triggered()
 
 void MainWindow::on_pushButton_released()
 { 
+    if ( inputImages.length() == 0 ) {
+        return;
+    }
+
     int resy = inputImages.at(0)->height();
     int resx = inputImages.at(0)->width();
 
