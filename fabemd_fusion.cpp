@@ -7,16 +7,16 @@
 
 FabemdFusion::FabemdFusion()
 {
-    ROWS        = 0;
-    COLUMNS     = 0;
+    WIDTH        = 0;
+    HEIGHT     = 0;
     scale_y     = true;
     fused_image = nullptr;
 }
 
-void FabemdFusion::FuseImages(const int rows_, const int columns_)
+void FabemdFusion::FuseImages(const int width_, const int height_)
 {
-    ROWS        = rows_;
-    COLUMNS     = columns_;
+    WIDTH        = width_;
+    HEIGHT     = height_;
     fused_image = nullptr;
 
     y_channels.clear();
@@ -45,13 +45,13 @@ void FabemdFusion::RGBToYCbCr()
 {
     //parse input images, convert them to YCbCr and save each channel to the respective vector
     for(int k = 0; k < inputImages->length(); ++k){
-        Matrix2D<float> *y_channel  = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
-        Matrix2D<float> *cb_channel = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
-        Matrix2D<float> *cr_channel = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+        Matrix2D<float> *y_channel  = new Matrix2D<float>(static_cast<uint>(WIDTH), static_cast<uint>(HEIGHT));
+        Matrix2D<float> *cb_channel = new Matrix2D<float>(static_cast<uint>(WIDTH), static_cast<uint>(HEIGHT));
+        Matrix2D<float> *cr_channel = new Matrix2D<float>(static_cast<uint>(WIDTH), static_cast<uint>(HEIGHT));
 
         //convert to ycbcr format
-        for(int i = 0; i < ROWS; ++i){
-            for(int j = 0; j < COLUMNS; ++j){
+        for(int i = 0; i < WIDTH; ++i){
+            for(int j = 0; j < HEIGHT; ++j){
                 QColor rgb  = inputImages->at(k)->pixel(i, j);
                 float red   = static_cast<float>(rgb.red());
                 float green = static_cast<float>(rgb.green());
@@ -77,10 +77,10 @@ void FabemdFusion::RGBToYCbCr()
 
 void FabemdFusion::YCbCrToRGB()
 {
-    fused_image = new QImage(ROWS, COLUMNS, QImage::Format_RGB888);
+    fused_image = new QImage(WIDTH, HEIGHT, QImage::Format_RGB888);
 
-    for ( int i = 0; i < ROWS; ++i ) {
-        for ( int j = 0; j < COLUMNS; ++j ) {
+    for ( int i = 0; i < WIDTH; ++i ) {
+        for ( int j = 0; j < HEIGHT; ++j ) {
             float y  = fused_y->ValueAt(i,j);
             float cb = fused_cb->ValueAt(i,j);
             float cr = fused_cr->ValueAt(i,j);
@@ -123,8 +123,8 @@ void FabemdFusion::DecomposeY()
 
     QVector<float> maxima_distances;
     QVector<float> minima_distances;
-    Matrix2D<float> local_maxima(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
-    Matrix2D<float> local_minima(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+    Matrix2D<float> local_maxima(static_cast<uint>(WIDTH), static_cast<uint>(HEIGHT));
+    Matrix2D<float> local_minima(static_cast<uint>(WIDTH), static_cast<uint>(HEIGHT));
 
     //Init extrema count for the first iteration
     int extrema_count = 5000;
@@ -134,7 +134,7 @@ void FabemdFusion::DecomposeY()
     //Control the decomposition granularity. Trade-off between performance for image quality
     int imf_count = 0;
 
-    while ( (extrema_count > extrema_threshold) && (imf_count < 8) ) {
+    while ( (extrema_count > extrema_threshold) && (imf_count < 5) ) {
 
         int win_size_prev = win_size;
 
@@ -149,8 +149,8 @@ void FabemdFusion::DecomposeY()
             Matrix2D<float> *cur_y = y_channels[k];
 
             //TODO create function detect_local_maxima()
-            for ( int i = 1; i < ROWS - 1; ++i ) {
-                for ( int j = 1; j < COLUMNS - 1; ++j ) {
+            for ( int i = 1; i < WIDTH - 1; ++i ) {
+                for ( int j = 1; j < HEIGHT - 1; ++j ) {
 
                     if ( ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i - 1, j - 1) ) &&
                          ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i - 1, j)     ) &&
@@ -162,7 +162,7 @@ void FabemdFusion::DecomposeY()
                          ( cur_y->ValueAt(i, j) > cur_y->ValueAt(i + 1, j +1)  )){
                             local_maxima.SetCellValue( i, j,  cur_y->ValueAt(i, j));
                             //Fill the maxima distances with the biggest possible distance
-                            maxima_distances.push_back(static_cast<float>(qSqrt(ROWS*ROWS + COLUMNS*COLUMNS)));
+                            maxima_distances.push_back(static_cast<float>(qSqrt(WIDTH*WIDTH + HEIGHT*HEIGHT)));
                      }
 
                     if((cur_y->ValueAt(i, j) < cur_y->ValueAt(i - 1, j - 1)) &&
@@ -175,7 +175,7 @@ void FabemdFusion::DecomposeY()
                        (cur_y->ValueAt(i, j) < cur_y->ValueAt(i + 1, j +1))){
                             local_minima.SetCellValue( i, j,  cur_y->ValueAt(i, j));
                             //Fill the maxima distances with the biggest possible distance
-                            minima_distances.push_back(static_cast<float>(qSqrt(ROWS*ROWS + COLUMNS*COLUMNS)));
+                            minima_distances.push_back(static_cast<float>(qSqrt(WIDTH*WIDTH + HEIGHT*HEIGHT)));
                      }
                  }
             }
@@ -263,8 +263,8 @@ int FabemdFusion::GetExtremaDistance(Matrix2D<float> *extrema, QVector<float> *e
 {
     float const max_distance = extrema_distances->at(0);
     int counter = -1;
-    for(int i = 1; i < ROWS - 1; ++i){
-        for(int j = 1; j < COLUMNS - 1; ++j){
+    for(int i = 1; i < WIDTH - 1; ++i){
+        for(int j = 1; j < HEIGHT - 1; ++j){
 
             if(extrema->ValueAt(i, j) >= 0){
                 bool distance_found   = false;
@@ -278,7 +278,7 @@ int FabemdFusion::GetExtremaDistance(Matrix2D<float> *extrema, QVector<float> *e
                     //Top
                     int cur_row = i - win_half_size;
                     for ( int l = -win_half_size; l < win_half_size; ++l ) {
-                        if ( (((cur_row) > 0) && ((j+l) > 0) && ((cur_row) < ROWS) && ((j+l) < COLUMNS)) && (extrema->ValueAt(cur_row, j+l) >= 0) ) {
+                        if ( (((cur_row) > 0) && ((j+l) > 0) && ((cur_row) < WIDTH) && ((j+l) < HEIGHT)) && (extrema->ValueAt(cur_row, j+l) >= 0) ) {
                             if(static_cast<float>(qSqrt(win_half_size*win_half_size + l*l)) < distance_temp){
                                 distance_temp = static_cast<float>(qSqrt(win_half_size*win_half_size + l*l));
                             }
@@ -288,7 +288,7 @@ int FabemdFusion::GetExtremaDistance(Matrix2D<float> *extrema, QVector<float> *e
                     int cur_col = j - win_half_size;
                     for(int k = -win_half_size; k < win_half_size; ++k){
                         //If curr index is valid and the is a local extrema
-                        if((((i+k) > 0) && ((cur_col) > 0) && ((i+k) < ROWS) && ((cur_col) < COLUMNS)) && (extrema->ValueAt(i + k, cur_col) >= 0)){
+                        if((((i+k) > 0) && ((cur_col) > 0) && ((i+k) < WIDTH) && ((cur_col) < HEIGHT)) && (extrema->ValueAt(i + k, cur_col) >= 0)){
                             //Update distance_temp if the new distance is shorter
                             if(static_cast<float>(qSqrt(k*k + win_half_size*win_half_size)) < distance_temp){
                                 distance_temp = static_cast<float>(qSqrt(k*k + win_half_size*win_half_size));
@@ -300,7 +300,7 @@ int FabemdFusion::GetExtremaDistance(Matrix2D<float> *extrema, QVector<float> *e
                     cur_row = i + win_half_size;
                     for(int l = -win_half_size; l < win_half_size; ++l){
                         //If curr index is valid and the is a local extrema
-                        if((((cur_row) > 0) && ((j+l) > 0) && ((cur_row) < ROWS) && ((j+l) < COLUMNS)) && (extrema->ValueAt(cur_row, j + l) >= 0)){
+                        if((((cur_row) > 0) && ((j+l) > 0) && ((cur_row) < WIDTH) && ((j+l) < HEIGHT)) && (extrema->ValueAt(cur_row, j + l) >= 0)){
                             //Update distance_temp if the new distance is shorter
                             if(static_cast<float>(qSqrt(win_half_size*win_half_size + l*l)) < distance_temp){
                                 distance_temp = static_cast<float>(qSqrt(win_half_size*win_half_size + l*l));
@@ -311,7 +311,7 @@ int FabemdFusion::GetExtremaDistance(Matrix2D<float> *extrema, QVector<float> *e
                     cur_col = j + win_half_size;
                     for(int k = -win_half_size; k < win_half_size; ++k){
                         //If curr index is valid and the is a local extrema
-                        if((((i+k) > 0) && ((cur_col) > 0) && ((i+k) < ROWS) && ((cur_col) < COLUMNS)) && (extrema->ValueAt(i + k, cur_col) >= 0)){
+                        if((((i+k) > 0) && ((cur_col) > 0) && ((i+k) < WIDTH) && ((cur_col) < HEIGHT)) && (extrema->ValueAt(i + k, cur_col) >= 0)){
                             //Update distance_temp if the new distance is shorter
                             if(static_cast<float>(qSqrt(k*k + win_half_size*win_half_size)) < distance_temp){
                                 distance_temp = static_cast<float>(qSqrt(k*k + win_half_size*win_half_size));
@@ -344,14 +344,14 @@ void FabemdFusion::FuseIMFs(const int win_size)
 
     QVector<float> weights;
 
-    fused_y = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+    fused_y = new Matrix2D<float>(static_cast<uint>(WIDTH), static_cast<uint>(HEIGHT));
 
     auto start = std::chrono::steady_clock::now();
     for ( int i = 0; i < imfs_depth; ++i ) {
-        Matrix2D<float> *fused_imf = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+        Matrix2D<float> *fused_imf = new Matrix2D<float>(static_cast<uint>(WIDTH), static_cast<uint>(HEIGHT));
 
-        for ( int x = 0; x < ROWS; ++x ) {
-            for ( int y = 0; y < COLUMNS; ++y ) {
+        for ( int x = 0; x < WIDTH; ++x ) {
+            for ( int y = 0; y < HEIGHT; ++y ) {
                 float denom = 0.f;
                 float nom   = 0.f;
 
@@ -364,14 +364,14 @@ void FabemdFusion::FuseIMFs(const int win_size)
 
                             if ( row < 0 ) {
                                 row = -row;
-                            } else if ( row >= ROWS ) {
-                                row -= ROWS;
+                            } else if ( row >= WIDTH ) {
+                                row -= WIDTH;
                             }
 
                             if ( column < 0 ) {
                                 column = -column;
-                            } else if ( column >= COLUMNS ) {
-                                column -= COLUMNS;
+                            } else if ( column >= HEIGHT ) {
+                                column -= HEIGHT;
                             }
 
                             local_energy += imfs.at(j).at(i)->ValueAt(row, column) * imfs.at(j).at(i)->ValueAt(row, column);
@@ -411,15 +411,15 @@ void FabemdFusion::FuseIMFs(const int win_size)
 
 void FabemdFusion::FuseCbCr()
 {
-    fused_cb = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
-    fused_cr = new Matrix2D<float>(static_cast<uint>(ROWS), static_cast<uint>(COLUMNS));
+    fused_cb = new Matrix2D<float>(static_cast<uint>(WIDTH), static_cast<uint>(HEIGHT));
+    fused_cr = new Matrix2D<float>(static_cast<uint>(WIDTH), static_cast<uint>(HEIGHT));
 
     const int images_count = cb_channels.length();
 
     RestoreYChannels();
 
-    for ( int i = 0; i < ROWS; ++i ) {
-        for ( int j = 0; j < COLUMNS; ++j ) {
+    for ( int i = 0; i < WIDTH; ++i ) {
+        for ( int j = 0; j < HEIGHT; ++j ) {
 
             float y  = y_channels.at(0)->ValueAt(i, j);
             float cb = cb_channels.at(0)->ValueAt(i, j);

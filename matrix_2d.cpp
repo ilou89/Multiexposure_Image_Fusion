@@ -6,14 +6,14 @@
 #include <chrono>
 
 template<typename T>
-Matrix2D<T>::Matrix2D(const uint rows_, const uint columns_)
+Matrix2D<T>::Matrix2D(const uint width, const uint height)
 {
-    mat.resize(rows_);
+    mat.resize(width);
       for (int i=0; i<mat.size(); i++) {
-        mat[i].resize(columns_);
+        mat[i].resize(height);
       }
-      rows    = rows_;
-      columns = columns_;
+      columns = width;
+      rows    = height;
 
       //Initialize all values to 0.f
       Fill(0.f);
@@ -22,16 +22,16 @@ Matrix2D<T>::Matrix2D(const uint rows_, const uint columns_)
 template<typename T>
 Matrix2D<T>::Matrix2D(const Matrix2D &p2)
 {
-    mat.resize(p2.rows);
+    mat.resize(p2.columns);
     for (int i=0; i<mat.size(); i++) {
-      mat[i].resize(p2.columns);
+      mat[i].resize(p2.rows);
     }
 
-    rows    = p2.rows;
-    columns = p2.columns;
+    columns    = p2.columns;
+    rows = p2.rows;
 
-    for(int i = 0; i < rows; ++i){
-        for(int j = 0; j < columns; ++j){
+    for(int i = 0; i < columns; ++i){
+        for(int j = 0; j < rows; ++j){
             mat[i][j] = p2.mat[i][j];
         }
     }
@@ -41,12 +41,12 @@ template<typename T>
 Matrix2D<T> Matrix2D<T>::operator+(const Matrix2D &m)
 {
     //  if matrices do not have the same size, return original matrix
-    if (rows != m.rows || columns != m.columns){
+    if (columns != m.columns || rows != m.rows){
             return (*this);
     }
-    Matrix2D<T> new_mat(rows, columns);
-    for (int i = 0; i < rows; ++i){
-        for (int j = 0; j < columns; ++j){
+    Matrix2D<T> new_mat(columns, rows);
+    for (int i = 0; i < columns; ++i){
+        for (int j = 0; j < rows; ++j){
             new_mat.mat[i][j] = this->mat[i][j] + m.mat[i][j];
         }
     }
@@ -57,12 +57,12 @@ template<typename T>
 Matrix2D<T> Matrix2D<T>::operator-(const Matrix2D &m)
 {
     //  if matrices do not have the same size, return original matrix
-    if (rows != m.rows || columns != m.columns){
+    if (columns != m.columns || rows != m.rows){
             return (*this);
     }
-    Matrix2D<T> new_mat(rows, columns);
-    for (int i = 0; i < rows; ++i){
-        for (int j = 0; j < columns; ++j){
+    Matrix2D<T> new_mat(columns, rows);
+    for (int i = 0; i < columns; ++i){
+        for (int j = 0; j < rows; ++j){
             new_mat.mat[i][j] = this->mat[i][j] - m.mat[i][j];
         }
     }
@@ -72,8 +72,8 @@ Matrix2D<T> Matrix2D<T>::operator-(const Matrix2D &m)
 template<typename T>
 Matrix2D<T> Matrix2D<T>::operator*(const T value)
 {
-    for (int i = 0; i < rows; ++i){
-        for (int j = 0; j < columns; ++j){
+    for (int i = 0; i < columns; ++i){
+        for (int j = 0; j < rows; ++j){
             this->mat[i][j] = value*this->mat[i][j];
         }
     }
@@ -84,8 +84,8 @@ Matrix2D<T> Matrix2D<T>::operator*(const T value)
 template<typename T>
 bool Matrix2D<T>::Compare(const Matrix2D &m2)
 {
-    for (int i = 0; i < rows; ++i){
-        for (int j = 0; j < columns; ++j){
+    for (int i = 0; i < columns; ++i){
+        for (int j = 0; j < rows; ++j){
             if ( this->mat[i][j] - m2.mat[i][j] > 1.f) {
                 return false;
             }
@@ -105,13 +105,13 @@ Matrix2D<T>::~Matrix2D()
 template<typename T>
 uint Matrix2D<T>::GetRows()
 {
-    return rows;
+    return columns;
 }
 
 template<typename T>
 uint Matrix2D<T>::GetColumns()
 {
-    return columns;
+    return rows;
 }
 
 template<typename T>
@@ -137,7 +137,7 @@ void Matrix2D<T>::Fill(const T value)
 template<typename T>
 QImage* Matrix2D<T>::ConvertToQImage()
 {
-    QImage *image = new QImage(this->rows, this->columns, QImage::Format_RGB32);
+    QImage *image = new QImage(this->columns, this->rows, QImage::Format_RGB32);
 
     for(int i = 0; i < image->width(); ++i){
         for(int j = 0; j < image->height(); ++j){
@@ -162,21 +162,21 @@ template<typename T>
 void Matrix2D<T>::FilterMax(const int filter_size)
 {
     int half_size = filter_size/2;
-    Matrix2D<T> temp_matrix(rows, columns);
+    Matrix2D<T> temp_matrix(columns, rows);
 
-    for ( int i = 0; i < rows; ++i ) {
-        for ( int j = 0; j < columns; ++j ) {
+    for ( int i = 0; i < columns; ++i ) {
+        for ( int j = 0; j < rows; ++j ) {
             T max_value = -1.f;
             for(int k = -half_size; k <= half_size; ++k){
                 for(int l = -half_size; l <= half_size; ++l){
                     int row    = i + k;
                     int column = j + l;
 
-                    if(row < 0 || row >= rows){
+                    if(row < 0 || row >= columns){
                         break;
                     }
 
-                    if(column < 0 || column >= columns){
+                    if(column < 0 || column >= rows){
                         continue;
                     }
 
@@ -190,8 +190,8 @@ void Matrix2D<T>::FilterMax(const int filter_size)
         }
     }
 
-    for(int i = 0; i < rows; ++i){
-        for(int j = 0; j < columns; ++j){
+    for(int i = 0; i < columns; ++i){
+        for(int j = 0; j < rows; ++j){
             mat[i][j] = temp_matrix.mat[i][j];
         }
     }
@@ -201,10 +201,10 @@ template<typename T>
 void Matrix2D<T>::FilterMin(const int filter_size)
 {
     int half_size = filter_size/2;
-    Matrix2D<T> temp_matrix(rows, columns);
+    Matrix2D<T> temp_matrix(columns, rows);
 
-    for(int i = 0; i < rows; ++i){
-        for(int j = 0; j < columns; ++j){
+    for(int i = 0; i < columns; ++i){
+        for(int j = 0; j < rows; ++j){
 
             T min_value = 255.f;
 
@@ -224,11 +224,11 @@ void Matrix2D<T>::FilterMin(const int filter_size)
                         continue;
                     }
 
-                    if(row >= rows){
+                    if(row >= columns){
                         continue;
                     }
 
-                    if(column >= columns){
+                    if(column >= rows){
                         continue;
                     }
 
@@ -241,8 +241,8 @@ void Matrix2D<T>::FilterMin(const int filter_size)
         }
     }
 
-    for(int i = 0; i < rows; ++i){
-        for(int j = 0; j < columns; ++j){
+    for(int i = 0; i < columns; ++i){
+        for(int j = 0; j < rows; ++j){
             mat[i][j] = temp_matrix.mat[i][j];
         }
     }
@@ -254,12 +254,12 @@ void Matrix2D<T>::FilterMean(const int filter_size)
     //Mean Filter is separable, thus the convolution will be performed in two passes: row and column-wise
     int half_size = static_cast<int>(floor(filter_size/2));
 
-    Matrix2D<T> temp_matrix(rows, columns);
+    Matrix2D<T> temp_matrix(columns, rows);
 
 #if 1
     //Row-wise convolution
-    for(int i = 0; i < rows; ++i ) {
-        for(int j = 0; j < columns; ++j){
+    for(int i = 0; i < columns; ++i ) {
+        for(int j = 0; j < rows; ++j){
             T new_value      = 0.f;
             int pixels_count = 0;
             for(int k = -half_size; k <= half_size; ++k){
@@ -269,11 +269,11 @@ void Matrix2D<T>::FilterMean(const int filter_size)
                 if (row < 0 ) {
                     row = -row;
                 }
-                if ( row >= rows) {
-                    row -= rows;
+                if ( row >= columns) {
+                    row -= columns;
                 }
 
-                if ( row >= 0 && row < rows ) {
+                if ( row >= 0 && row < columns ) {
                     pixels_count++;
                     new_value += mat[row][j];
                 }
@@ -282,10 +282,10 @@ void Matrix2D<T>::FilterMean(const int filter_size)
         }
     }
 
-    Matrix2D<T> temp_matrix2(rows, columns);
+    Matrix2D<T> temp_matrix2(columns, rows);
     //Column-wise convolution
-    for(int i = 0; i < rows; ++i ) {
-        for(int j = 0; j < columns; ++j){
+    for(int i = 0; i < columns; ++i ) {
+        for(int j = 0; j < rows; ++j){
             T new_value      = 0.f;
             int pixels_count = 0;
             for(int k = -half_size; k <= half_size; ++k){
@@ -295,11 +295,11 @@ void Matrix2D<T>::FilterMean(const int filter_size)
                 if (column < 0 ) {
                     column = -column;
                 }
-                if ( column >= columns) {
+                if ( column >= rows) {
                     column -= column;
                 }
 
-                if ( column >= 0 && column < columns ) {
+                if ( column >= 0 && column < rows ) {
                     pixels_count++;
                     new_value += temp_matrix.mat[i][column];
                 }
@@ -355,8 +355,8 @@ void Matrix2D<T>::FilterMean(const int filter_size)
         }
     }
 #endif
-    for(int i = 0; i < rows; ++i){
-        for(int j = 0; j < columns; ++j){
+    for(int i = 0; i < columns; ++i){
+        for(int j = 0; j < rows; ++j){
             mat[i][j] = temp_matrix.mat[i][j];
         }
     }
@@ -368,8 +368,8 @@ void Matrix2D<T>::ScaleToInterval(const T start, const T end)
     const T min = GetMinValue();
     const T max = GetMaxValue();
 
-    for ( int i = 0; i < rows; ++i ) {
-        for ( int j = 0; j < columns; ++j ) {
+    for ( int i = 0; i < columns; ++i ) {
+        for ( int j = 0; j < rows; ++j ) {
             mat[i][j] = start + (end - start) * ( mat[i][j] - min ) / ( max - min );
         }
     }
@@ -379,8 +379,8 @@ template<typename T>
 T Matrix2D<T>::GetMinValue()
 {
     T min = mat[0][0];
-    for ( int i = 0; i < rows; ++i ) {
-        for ( int j = 0; j < columns; ++j ) {
+    for ( int i = 0; i < columns; ++i ) {
+        for ( int j = 0; j < rows; ++j ) {
             if (mat[i][j] < min) {
                 min = mat[i][j];
             }
@@ -394,8 +394,8 @@ template<typename T>
 T Matrix2D<T>::GetMaxValue()
 {
     T max = mat[0][0];
-    for ( int i = 0; i < rows; ++i ) {
-        for ( int j = 0; j < columns; ++j ) {
+    for ( int i = 0; i < columns; ++i ) {
+        for ( int j = 0; j < rows; ++j ) {
             if (mat[i][j] > max) {
                 max = mat[i][j];
             }
@@ -415,9 +415,9 @@ void Matrix2D<T>::SaveToFile(const QString filename)
     {
         QTextStream stream( &file );
 
-        for( int i = 0; i < rows; ++i ) {
+        for( int i = 0; i < columns; ++i ) {
             stream << "[ ";
-            for( int j = 0; j < columns; ++j ) {
+            for( int j = 0; j < rows; ++j ) {
                 stream << QString::number(mat[i][j], 'f', 2) <<", ";
             }
             stream << "]\n";

@@ -6,7 +6,7 @@
 template <typename T> class Matrix2D
 {
 public:
-    Matrix2D(const uint rows_, const uint columns_);
+    Matrix2D(const uint width, const uint height);
     Matrix2D(const Matrix2D &p2);
 
     //Implement operators as friends
@@ -34,7 +34,7 @@ public:
     virtual void FilterMean(const int filter_size);
 
 protected:
-    int rows, columns;
+    int columns, rows;
     QVector<QVector<T> > mat;
 };
 
