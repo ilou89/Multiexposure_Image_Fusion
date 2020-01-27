@@ -1,6 +1,6 @@
 #ifndef MATRIX_H
 #define MATRIX_H
-#include <QVector>
+#include <vector>
 #include <QImage>
 
 template <typename T> class Matrix2D
@@ -9,7 +9,6 @@ public:
     Matrix2D(const uint width_, const uint height_);
     Matrix2D(const Matrix2D &p2);
 
-    //Implement operators as friends
     Matrix2D operator+(const Matrix2D&);
     Matrix2D operator-(const Matrix2D&);
     Matrix2D operator*(const T value);
@@ -35,7 +34,7 @@ public:
 
 protected:
     int width, height;
-    QVector<QVector<T> > mat;
+    std::vector<std::vector<T> > mat;
 };
 
 //Include source file due to the template feature
