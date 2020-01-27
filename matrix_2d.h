@@ -6,7 +6,7 @@
 template <typename T> class Matrix2D
 {
 public:
-    Matrix2D(const uint width, const uint height);
+    Matrix2D(const uint width_, const uint height_);
     Matrix2D(const Matrix2D &p2);
 
     //Implement operators as friends
@@ -17,13 +17,13 @@ public:
     virtual ~Matrix2D();
 
     QImage* ConvertToQImage();
-    uint    GetRows();
-    uint    GetColumns();
+    uint    GetWidth();
+    uint    GetHeight();
     T       GetMinValue();
     T       GetMaxValue();
-    T       ValueAt(const int i, const int j);
+    T       ValueAt(const int x, const int y);
     void    SaveToFile(const QString filename);
-    void    SetCellValue(const int i, const int j, const T value);
+    void    SetCellValue(const int x, const int y, const T value);
     void    Fill(const T value);
     void    ScaleToInterval(const T start, const T end);
     bool    Compare(const Matrix2D&m2);
@@ -34,7 +34,7 @@ public:
     virtual void FilterMean(const int filter_size);
 
 protected:
-    int columns, rows;
+    int width, height;
     QVector<QVector<T> > mat;
 };
 
