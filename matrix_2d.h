@@ -34,7 +34,7 @@ public:
 
 protected:
     int width, height;
-    std::vector<std::vector<T> > mat;
+    std::vector< std::vector<T> > mat;
 };
 
 //Include source file due to the template feature

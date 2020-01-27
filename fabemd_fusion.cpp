@@ -1,9 +1,13 @@
+#include <iostream>
+#include <iomanip>
+
 #include "fabemd_fusion.h"
 #include <QDebug>
 #include <qmath.h>
 #include <algorithm>
 #include <chrono>
 #include "matrix_2d.h"
+
 
 FabemdFusion::FabemdFusion()
 {
@@ -24,11 +28,15 @@ void FabemdFusion::FuseImages(const int width_, const int height_)
     cr_channels.clear();
     imfs.clear();
 
+    auto start = std::chrono::steady_clock::now();
     RGBToYCbCr();
     DecomposeY();
     FuseIMFs(3);
     FuseCbCr();
     YCbCrToRGB();
+
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "Total Runtime:  " << std::setw(10) << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms" << std::endl<< std::flush;
 }
 
 void FabemdFusion::SetInputImages(QVector<QImage *> *images)
@@ -218,22 +226,22 @@ void FabemdFusion::DecomposeY()
 
             upper_envelope->FilterMax(win_size);
             auto end = std::chrono::steady_clock::now();
-            std::cout << "MAX Filter: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< win_size<<"   "<<std::endl<< std::flush;
+            std::cout << "MAX Filter:  " << std::setw(4) << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" <<" Filter size "<< win_size<<"   "<<std::endl<< std::flush;
             start = std::chrono::steady_clock::now();
             upper_envelope->FilterMean(win_size);
             end = std::chrono::steady_clock::now();
-            std::cout << "MEAN Filter: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< win_size<<"   "<<std::endl<< std::flush;
+            std::cout << "MEAN Filter: " << std::setw(4) << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< win_size<<"   "<<std::endl<< std::flush;
 
 
             Matrix2D<float> *lower_envelope = new Matrix2D<float>(*y_channels[k]);
             start = std::chrono::steady_clock::now();
             lower_envelope->FilterMin(win_size);
             end = std::chrono::steady_clock::now();
-            std::cout << "MIN Filter: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< win_size<<"   "<<std::endl<< std::flush;
+            std::cout << "MIN Filter:  " << std::setw(4) << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< win_size<<"   "<<std::endl<< std::flush;
             start = std::chrono::steady_clock::now();
             lower_envelope->FilterMean(win_size);
             end = std::chrono::steady_clock::now();
-            std::cout << "MEAN Filter: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" << " Filter size "<< win_size<<"   "<<std::endl<< std::flush;
+            std::cout << "MEAN Filter: " << std::setw(4) << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<< " ms ||" <<" Filter size "<< win_size<<"   "<<std::endl<< std::flush;
 
 
             Matrix2D<float> *imf = new Matrix2D<float>(*y_channels[k]);
