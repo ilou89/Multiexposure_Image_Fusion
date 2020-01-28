@@ -19,15 +19,18 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
-    void SetFusedImage(QImage *fused_image);
+    static MainWindow *GetInstance();
     ~MainWindow();
+    void SetFusedImage(QImage *fused_image);
 
 private slots:
     void on_actionOpen_Images_triggered();
     void on_pushButton_released();
 
 private:
+    MainWindow(QWidget *parent = nullptr);
+    static MainWindow *instance;
+
     void resizeEvent(QResizeEvent* event);
     Ui::MainWindow *ui;
     QVector<QLabel*> in_im_widgets;

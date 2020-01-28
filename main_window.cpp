@@ -4,6 +4,17 @@
 #include <QFileDialog>
 #include <QPixmap>
 
+MainWindow* MainWindow::instance = nullptr;
+
+MainWindow *MainWindow::GetInstance()
+{
+    if ( instance == nullptr ) {
+          instance = new MainWindow();
+    }
+
+    return instance;
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
