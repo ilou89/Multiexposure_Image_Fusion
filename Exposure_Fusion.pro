@@ -28,14 +28,16 @@ SOURCES += \
         main.cpp \
         main_window.cpp \
     fabemd_fusion.cpp \
-    zoom_graphics_view.cpp
+    zoom_graphics_view.cpp \
+    matrix_factory.cpp
     #matrix.cpp
 
 HEADERS += \
         main_window.h \
     matrix_2d.h \
     fabemd_fusion.h \
-    zoom_graphics_view.h
+    zoom_graphics_view.h \
+    matrix_factory.h
 
 FORMS += \
         mainwindow.ui

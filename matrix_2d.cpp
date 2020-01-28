@@ -9,7 +9,7 @@ template<typename T>
 Matrix2D<T>::Matrix2D(const uint width_, const uint height_)
 {
     mat.resize(width_);
-      for (int i=0; i<mat.size(); i++) {
+      for ( uint i=0; i < mat.size(); ++i ) {
         mat[i].resize(height_);
       }
       width  = width_;
@@ -23,7 +23,7 @@ template<typename T>
 Matrix2D<T>::Matrix2D(const Matrix2D &p2)
 {
     mat.resize(p2.width);
-    for (int i=0; i<mat.size(); i++) {
+    for ( uint i=0; i < mat.size(); ++i) {
       mat[i].resize(p2.height);
     }
 
@@ -129,7 +129,7 @@ void Matrix2D<T>::SetCellValue(const int x, const int y, const T value)
 template<typename T>
 void Matrix2D<T>::Fill(const T value)
 {
-    for (int i = 0; i<mat.size(); ++i) {
+    for (uint i = 0; i < mat.size(); ++i) {
       std::fill( mat[i].begin(), mat[i].end(), value);
     }
 }

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <chrono>
 #include "matrix_2d.h"
+#include "matrix_factory.h"
 
 
 FabemdFusion::FabemdFusion()
@@ -19,8 +20,8 @@ FabemdFusion::FabemdFusion()
 
 void FabemdFusion::FuseImages(const int width_, const int height_)
 {
-    WIDTH        = width_;
-    HEIGHT     = height_;
+    WIDTH       = width_;
+    HEIGHT      = height_;
     fused_image = nullptr;
 
     y_channels.clear();
