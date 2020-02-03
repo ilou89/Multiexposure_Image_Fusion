@@ -63,7 +63,7 @@ void MainWindow::on_actionOpen_Images_triggered()
 
         //Create ui widgets, load images
         image_count = filenames.count();
-        QImage* first_image = new QImage(filenames.at(0));
+        std::unique_ptr<QImage> first_image = std::make_unique<QImage>(QImage(filenames.at(0)));
         aspect_ratio = static_cast<float>(first_image->width())/static_cast<float>(first_image->height());
         int height = ui->GraphicsView->height()/filenames.count();
         int width  = static_cast<int>(aspect_ratio*height);
@@ -80,7 +80,6 @@ void MainWindow::on_actionOpen_Images_triggered()
             imageLabel->setFixedSize(width, height);
         }
 
-        delete first_image;
         scene->clear();
     }
 }

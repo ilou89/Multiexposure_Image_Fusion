@@ -12,8 +12,8 @@
 
 FabemdFusion::FabemdFusion()
 {
-    WIDTH        = 0;
-    HEIGHT     = 0;
+    WIDTH       = 0;
+    HEIGHT      = 0;
     scale_y     = true;
     fused_image = nullptr;
 }
