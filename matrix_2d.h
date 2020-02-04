@@ -7,7 +7,7 @@ template <typename T> class Matrix2D
 {
 public:
     Matrix2D(const uint width_, const uint height_);
-    Matrix2D(const Matrix2D &p2);
+    Matrix2D(const Matrix2D &p2) = default;
 
     Matrix2D operator+(const Matrix2D&);
     Matrix2D operator-(const Matrix2D&);

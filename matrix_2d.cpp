@@ -20,24 +20,6 @@ Matrix2D<T>::Matrix2D(const uint width_, const uint height_)
 }
 
 template<typename T>
-Matrix2D<T>::Matrix2D(const Matrix2D &p2)
-{
-    mat.resize(p2.width);
-    for ( uint i=0; i < mat.size(); ++i) {
-      mat[i].resize(p2.height);
-    }
-
-    width  = p2.width;
-    height = p2.height;
-
-    for(int i = 0; i < width; ++i){
-        for(int j = 0; j < height; ++j){
-            mat[i][j] = p2.mat[i][j];
-        }
-    }
-}
-
-template<typename T>
 Matrix2D<T> Matrix2D<T>::operator+(const Matrix2D &m)
 {
     //  if matrices do not have the same size, return original matrix
