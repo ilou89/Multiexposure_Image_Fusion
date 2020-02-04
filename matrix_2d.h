@@ -2,6 +2,7 @@
 #define MATRIX_H
 #include <vector>
 #include <QImage>
+#include <memory>
 
 template <typename T> class Matrix2D
 {
@@ -16,7 +17,7 @@ public:
     Matrix2D operator-(const Matrix2D&);
     Matrix2D operator*(const T value);
 
-    QImage* ConvertToQImage();
+    std::unique_ptr<QImage> ConvertToQImage();
     uint    GetWidth();
     uint    GetHeight();
     T       GetMinValue();

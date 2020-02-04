@@ -117,10 +117,9 @@ void Matrix2D<T>::Fill(const T value)
 }
 
 template<typename T>
-QImage* Matrix2D<T>::ConvertToQImage()
+std::unique_ptr<QImage> Matrix2D<T>::ConvertToQImage()
 {
-    QImage *image = new QImage(this->width, this->height, QImage::Format_RGB32);
-
+    std::unique_ptr<QImage> image = std::make_unique<QImage>(this->width, this->height, QImage::Format_RGB32);
     for(int x = 0; x < image->width(); ++x){
         for(int y = 0; y < image->height(); ++y){
 
@@ -136,8 +135,8 @@ QImage* Matrix2D<T>::ConvertToQImage()
             image->setPixel(x, y, color);
         }
     }
-
-    return image;
+    //Ownership is passed to the callee
+    return std::move(image);
 }
 
 template<typename T>

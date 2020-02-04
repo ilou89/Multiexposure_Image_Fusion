@@ -45,9 +45,9 @@ void FabemdFusion::SetInputImages(QVector<QImage *> *images)
     inputImages = images;
 }
 
-QImage *FabemdFusion::GetFusedImage()
+std::unique_ptr<QImage> FabemdFusion::GetFusedImage()
 {
-    return fused_image;
+    return std::move(fused_image);
 }
 
 void FabemdFusion::RGBToYCbCr()
@@ -86,7 +86,7 @@ void FabemdFusion::RGBToYCbCr()
 
 void FabemdFusion::YCbCrToRGB()
 {
-    fused_image = new QImage(WIDTH, HEIGHT, QImage::Format_RGB888);
+    fused_image = std::make_unique<QImage>(WIDTH, HEIGHT, QImage::Format_RGB888);
 
     for ( int i = 0; i < WIDTH; ++i ) {
         for ( int j = 0; j < HEIGHT; ++j ) {

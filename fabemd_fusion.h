@@ -11,7 +11,7 @@ public:
 
     void FuseImages(const int width_, const int height_);
     void SetInputImages(QVector<QImage *> *images);
-    QImage *GetFusedImage();
+    std::unique_ptr<QImage> GetFusedImage();
 
 private:
     QVector<QImage*> *inputImages;
@@ -30,7 +30,7 @@ private:
     void FuseIMFs(const int win_size);
     void FuseCbCr();
     void RestoreYChannels();
-    QImage *fused_image;
+    std::unique_ptr<QImage> fused_image;
 
     Matrix2D<float> *fused_y;
     Matrix2D<float> *fused_cb;

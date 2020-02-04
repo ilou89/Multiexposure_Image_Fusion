@@ -94,7 +94,7 @@ void MainWindow::on_pushButton_released()
     int resx = inputImages.at(0)->width();
 
     fabemdDecomposer->FuseImages(resx, resy);
-    SetFusedImage(fabemdDecomposer->GetFusedImage());
+    SetFusedImage(fabemdDecomposer->GetFusedImage().get());
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
