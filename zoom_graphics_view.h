@@ -2,6 +2,8 @@
 #define ZOOM_GRAPHICS_VIEW_H
 #include "QGraphicsView"
 #include "QtWidgets"
+#include"QTransform"
+
 
 class ZoomGraphicsView : public QGraphicsView
 {

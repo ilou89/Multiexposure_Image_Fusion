@@ -34,10 +34,10 @@ void ZoomGraphicsView::mouseReleaseEvent(QMouseEvent *event)
 void ZoomGraphicsView::setScale(float val)
 {
     scale = val;
-    QMatrix matrix;
+    QTransform matrix;
     matrix.reset();
     matrix.scale(static_cast<qreal>(scale), static_cast<qreal>(scale));
-    this->setMatrix(matrix, false);
+    this->setTransform(matrix,false);
 
 //    MainWindow *main_window = MainWindow::get_instance();
 //    main_window->updateStatusBar();
@@ -47,7 +47,7 @@ void ZoomGraphicsView::wheelEvent(QWheelEvent *event)
 {
     if ( event->modifiers() & Qt::ControlModifier ) {
         event->accept();
-        if ( event->delta() > 0 ) {
+        if ( event->angleDelta().y()> 0 ) {
             if ( scale < 16.f ) {
                 scale += 0.1f;
             }
